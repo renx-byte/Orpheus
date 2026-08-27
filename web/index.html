@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orpheus</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="index.js" defer></script>
+  </head>
+  <body>
+    <header class="header-area">
+      <h1 id="typewriter-heading"></h1>
+    </header>
+
+    <main class="main-content">
+      <section class="selection-area">
+        <!-- Using data attributes makes the JS completely dynamic and scalable -->
+        <div
+          class="selection-card"
+          data-title="SD CARD"
+          data-description="Explore the contents of Orpheus's SD card in one place. Browse through your stored music, albums, playlists, and other files, while keeping track of everything available on the device. Select songs to play them directly, navigate through folders, and manage your music library without needing to remove the SD card. This section serves as your central file browser for everything stored locally on Orpheus."
+        >
+          <h5 class="selection-text">SD Card</h5>
+        </div>
+
+        <div
+          class="selection-card"
+          data-title="UPLOAD"
+          data-description="Upload your music directly to Orpheus and keep your library organized without needing to access the SD card manually. Add songs along with their name, cover image, artist, album, and other details, ensuring every track is properly identified and displayed on the device. This section provides a simple way to upload and manage new music while keeping your Orpheus library clean, organized, and ready to play."
+        >
+          <h5 class="selection-text">Upload</h5>
+        </div>
+
+        <div
+          class="selection-card"
+          data-title="MONITOR INTERFACExxx"
+          data-description="Monitor Orpheus from one place with real-time system information and activity logs. Keep track of important details such as battery level, storage usage, system status, connectivity, and other device information, while viewing logs to help you understand what Orpheus is doing in the background. This section serves as your central terminal for monitoring, diagnosing, and keeping an eye on the overall health of the device."
+        >
+          <h5 class="selection-text">Terminal</h5>
+        </div>
+      </section>
+
+      <section class="result-area">
+        <div class="result-container" id="result-container">
+          <div class="result-wrapper" id="result-wrapper">
+            <h5 class="result-heading" id="result-heading"></h5>
+            <div class="description-container">
+              <p class="result-description" id="result-description"></p>
+              <h5 class="result-prompt">CLICK TO ENTER...</h5>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
