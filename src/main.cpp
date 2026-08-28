@@ -1,3 +1,4 @@
+#include "Storage.h"
 #include "credentials.h"
 #include "index_html.h"
 #include <Arduino.h>
@@ -5,18 +6,33 @@
 #include <WebServer.h>
 #include <WiFi.h>
 
+String response_web;
+
 WebServer server(80);
 
 void serve_webpage() { server.send(200, "text/html", index_html); }
 
 void click_handle() {
-  Serial.println("A button was pressed, no idea which one.");
 
   String body = server.arg("plain");
 
-  Serial.println(body);
+  JsonDocument json_obj;
 
-  server.send(200, "text/plain", "OK");
+  DeserializationError err = deserializeJson(json_obj, body);
+
+  if (err) {
+    Serial.println("JSON parsing failed.");
+  }
+
+  String title = json_obj["title"];
+
+  Serial.println(title);
+
+  if (title == "SD CARD") {
+    server.send(200, "text/html", response_web);
+  } else {
+    server.send(200, "text/html", "<h1>NOT SD CARD</h1>");
+  }
 }
 
 void setup() {
@@ -44,6 +60,12 @@ void setup() {
   server.on("/selection_click", HTTP_POST, click_handle);
 
   server.begin();
+
+  Storage::begin();
+
+  response_web = Storage::get_sd_html_structure();
+
+  Serial.println("SD Card Directory Observed.");
 }
 
 void loop() { server.handleClient(); }

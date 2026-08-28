@@ -328,3 +328,42 @@ h5 {
     opacity: 0.5;
   }
 }
+
+#sd-directory {
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+#sd-directory.is-visible {
+  opacity: 1;
+}
+
+#sd-directory ul {
+  list-style: none;
+  padding-left: 18px;
+  margin: 0;
+}
+
+#sd-directory li {
+  position: relative;
+  list-style-type: none;
+}
+
+#sd-directory .file::before {
+  content: "└─ ";
+  font-family: monospace;
+  color: var(--accent-cyan); /* Subtle grey branch line */
+  font-weight: bold;
+}
+
+.folder {
+  display: inline-block;
+  font-size: 28px;
+  color: var(--accent-gold);
+  margin-bottom: 15px;
+}
+
+.file {
+  display: inline-block;
+  margin-bottom: 10px;
+}

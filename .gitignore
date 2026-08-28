@@ -9,6 +9,3 @@ test/
 src/display/
 src/fonts/
 src/gui/
-src/storage/
-
-src/pins.h
