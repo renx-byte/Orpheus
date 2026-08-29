@@ -11,11 +11,10 @@ void Storage::generate_html_directory(File dir, String &html) {
     html += "  <li>";
 
     if (entry.isDirectory()) {
-      html +=
-          "<span class=\"folder\">📁 " + String(entry.name()) + "/</span>\n";
+      html += "<span class=\"folder\">" + String(entry.name()) + "/</span>\n";
       generate_html_directory(entry, html);
     } else {
-      html += "<span class=\"file\">📄 " + String(entry.name()) + "</span>";
+      html += "<span class=\"file\">" + String(entry.name()) + "</span>";
 
       double bytes = entry.size();
       double size = (bytes < 1000000) ? (bytes / 1000.0) : (bytes / 1000000.0);
@@ -42,6 +41,13 @@ String Storage::get_sd_html_structure() {
 
   generate_html_directory(root, html);
   root.close();
+
+  html += "  <div class=\"options-container\">\n";
+  html +=
+      "    <button class=\"result-button\" id=\"add-file\">ADD FILE</button>\n";
+  html += "    <button class=\"result-button\" id=\"remove-file\">REMOVE "
+          "FILE</button>\n";
+  html += "  </div>\n";
 
   html += "</div>";
   return html;

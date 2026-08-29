@@ -28,6 +28,10 @@
 
   --text-main: #cdd6f4; /* Soft off-white for high readability */
 
+  --soft-red: #d0311e;
+  --soft-blue: #4274d9;
+
+  --accent-yellow: #ffb900;
   --accent-gold: #f9e2af; /* Soft gold for headings */
   --accent-cyan: #89dceb; /* Vibrant cyan for interactive elements */
   --accent-blue: #89b4fa; /* Deep blue for borders */
@@ -132,8 +136,11 @@ body::after {
   }
 }
 
-body {
+* {
   font-family: "Raw Pixel", monospace, sans-serif;
+}
+
+body {
   margin: 0;
   background-color: var(--bg-main);
   color: var(--text-main);
@@ -260,13 +267,14 @@ h5 {
    RESULT CONTAINER
    ============================================================ */
 #result-container {
+  position: relative;
   width: 50vw;
   min-height: 500px;
   display: flex;
   flex-direction: column;
   padding: 40px;
 
-  background-color: var(--bg-panel);
+  background-color: #00000062;
   border: 3px solid #313244;
   box-shadow: 12px 12px 0 0 var(--shadow-color);
 
@@ -366,4 +374,267 @@ h5 {
 .file {
   display: inline-block;
   margin-bottom: 10px;
+}
+
+.options-container {
+  position: absolute;
+
+  left: 50%;
+  transform: translateX(-50%);
+
+  bottom: 40px;
+}
+
+.result-button {
+  font-size: 18px;
+  letter-spacing: 3px;
+  width: 180px;
+  height: 70px;
+  background-color: transparent;
+  clip-path: var(--pixel-shape);
+
+  box-shadow: 6px 6px 0 0 var(--shadow-color);
+  clip-path: var(--pixel-shape);
+  cursor: pointer;
+
+  margin: 0 20px;
+  transition: transform 300ms ease;
+}
+
+.size {
+  font-size: 22px;
+  color: var(--accent-cyan);
+
+  margin-left: 20px;
+}
+
+#add-file {
+  color: var(--soft-blue);
+  border: 3px solid var(--soft-blue);
+}
+
+#add-file:hover {
+  color: var(--bg-main);
+  background-color: var(--soft-blue);
+}
+
+#remove-file {
+  color: var(--soft-red);
+  border: 3px solid var(--soft-red);
+}
+
+#remove-file:hover {
+  color: var(--bg-main);
+  background-color: var(--soft-red);
+}
+
+.result-button:hover {
+  transform: translate(-3px, -3px);
+}
+
+/* Hide item add buttons by default */
+.add-item-btn {
+  display: none;
+  margin-right: 6px;
+  cursor: pointer;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-weight: bold;
+  padding: 0 4px;
+}
+
+/* Show + buttons when add mode is active */
+#sd-directory.is-adding .add-item-btn {
+  display: inline-block;
+}
+
+.add-item-btn {
+  padding: 05px 10px;
+}
+
+/* When add mode is active, make elements look clickable */
+#sd-directory.is-adding span.folder,
+#sd-directory.is-adding span.file {
+  cursor: pointer;
+  border-bottom: 1px dashed #28a745; /* Green dashed line indicator */
+}
+
+/* Add a hover effect so they know exactly which item they are targeting */
+#sd-directory.is-adding span.folder:hover,
+#sd-directory.is-adding span.file:hover {
+  background-color: rgba(40, 167, 69, 0.2);
+  border-radius: 3px;
+}
+
+/* ============================================================
+   CUSTOM MODAL STYLES
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 11, 16, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.modal-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-container {
+  background: var(--bg-panel);
+  border: 3px solid var(--accent-cyan);
+  clip-path: var(--pixel-shape);
+  padding: 25px;
+  width: 320px;
+  box-shadow: 8px 8px 0 0 var(--shadow-color);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: transform 300ms ease;
+  transform: translateY(10px);
+}
+
+.modal-overlay.is-visible .modal-container {
+  transform: translateY(0);
+}
+
+.modal-heading {
+  color: var(--accent-gold);
+  text-align: center;
+  margin: 0;
+  font-size: 20px;
+}
+
+.modal-step {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+.modal-text {
+  text-align: center;
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.highlight-text {
+  color: var(--accent-cyan);
+}
+
+.modal-btn-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.modal-btn-group.mt-10 {
+  margin-top: 10px;
+}
+
+.modal-btn {
+  width: 100%;
+  height: 45px;
+  font-size: 16px;
+  margin: 0;
+  border-width: 2px;
+}
+
+.modal-btn.small {
+  height: 40px;
+  font-size: 14px;
+}
+
+/* Button Variants */
+.btn-sibling {
+  border-color: var(--soft-blue);
+  color: var(--soft-blue);
+}
+.btn-child {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+.btn-type {
+  border-color: var(--accent-blue);
+  color: var(--accent-cyan);
+}
+.btn-type.is-active {
+  background-color: var(--accent-blue);
+  color: var(--bg-main);
+}
+.btn-cancel {
+  border-color: var(--soft-red);
+  color: var(--soft-red);
+}
+.btn-submit {
+  border-color: var(--soft-blue);
+  color: var(--soft-blue);
+}
+
+.modal-btn:hover:not(.is-active) {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translate(-2px, -2px);
+}
+
+.modal-input,
+.modal-textarea {
+  background: var(--bg-main);
+  border: 2px solid var(--accent-blue);
+  color: var(--text-main);
+  padding: 12px;
+  font-family: inherit;
+  outline: none;
+  clip-path: var(--pixel-shape);
+  transition: border-color 200ms ease;
+}
+
+.modal-input {
+  font-size: 16px;
+}
+.modal-textarea {
+  font-size: 14px;
+  height: 100px;
+  resize: none;
+}
+
+.modal-input.is-error {
+  border-color: var(--soft-red);
+  animation: shake 300ms;
+}
+
+/* Utility Classes */
+.d-none {
+  display: none !important;
+}
+.opacity-0 {
+  opacity: 0 !important;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }

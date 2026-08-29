@@ -35,6 +35,21 @@ void click_handle() {
   }
 }
 
+void payload_handle() {
+
+  String body = server.arg("plain");
+
+  JsonDocument json_obj;
+
+  DeserializationError err = deserializeJson(json_obj, body);
+
+  if (err) {
+    Serial.println("JSON parsing failed.");
+  }
+
+  Serial.println(body);
+}
+
 void setup() {
   delay(5000);
   Serial.begin(115200);
@@ -58,6 +73,8 @@ void setup() {
   server.on("/", HTTP_GET, serve_webpage);
 
   server.on("/selection_click", HTTP_POST, click_handle);
+
+  server.on("/create_payload", HTTP_POST, payload_handle);
 
   server.begin();
 
