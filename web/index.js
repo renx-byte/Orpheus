@@ -76,6 +76,29 @@ function hideResult() {
   }
 }
 
+async function uploadSong(data, iteration, totalIterations, songName) {
+  try {
+    const response = await fetch("/upload_song", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "X-Song-Name": songName,
+        "X-Chunk-Index": iteration.toString(),
+        "X-Total-Chunks": totalIterations.toString(),
+      },
+      body: data,
+    });
+
+    if (!response.ok) {
+      return "error";
+    }
+
+    return await response.text();
+  } catch (error) {
+    return "error";
+  }
+}
+
 function openCustomModal(targetName, isFolderTarget) {
   return new Promise((resolve) => {
     const modalHTML = `
@@ -113,6 +136,10 @@ function openCustomModal(targetName, isFolderTarget) {
                 FILE
               </button>
 
+              <button id="btn-upload" class="result-button modal-btn small btn-type">
+                UPLOAD
+              </button>
+
             </div>
             
             <input
@@ -128,6 +155,14 @@ function openCustomModal(targetName, isFolderTarget) {
               class="modal-textarea d-none"
               placeholder="Enter file content (optional)..."
             ></textarea>
+
+            <div id="drop-zone" class="d-none">
+
+            <p>Upload your media here</p>
+
+            <input type="file" id="file-input" hidden>
+            
+            </div>
 
             <div class="modal-btn-group mt-10">
               <button id="btn-cancel" class="result-button modal-btn btn-cancel">
@@ -155,14 +190,45 @@ function openCustomModal(targetName, isFolderTarget) {
       child: document.getElementById("btn-child"),
       folder: document.getElementById("btn-folder"),
       file: document.getElementById("btn-file"),
+      upload: document.getElementById("btn-upload"),
+      dropzone: document.getElementById("drop-zone"),
+      fileInput: document.getElementById("file-input"),
       name: document.getElementById("modal-input-name"),
       content: document.getElementById("modal-input-content"),
       cancel: document.getElementById("btn-cancel"),
       submit: document.getElementById("btn-submit"),
     };
 
+    elements.dropzone.addEventListener("click", (event) => {
+      event.stopPropagation();
+      elements.fileInput.click();
+    });
+
+    elements.fileInput.addEventListener("change", async (event) => {
+      const chunkSize = 32768;
+
+      const songFile = event.target.files[0];
+      const songName = songFile.name;
+      const songSize = songFile.size;
+
+      const totalIterations = Math.ceil(songSize / chunkSize);
+
+      for (let i = 0; i < totalIterations; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, songSize);
+        const chunk = songFile.slice(start, end);
+
+        const result = await uploadSong(chunk, i, totalIterations, songName);
+
+        if (result == "error") {
+          console.log("aborted at chunk: ", i);
+          break;
+        }
+      }
+    });
+
     let asChild = false;
-    let isFolder = true;
+    let selectedType = "folder"; // Expecting string: "folder", "file", or "upload"
 
     requestAnimationFrame(() => {
       overlay.classList.add("is-visible");
@@ -181,27 +247,35 @@ function openCustomModal(targetName, isFolderTarget) {
 
       setTimeout(() => {
         step1.classList.add("d-none");
-
         step2.classList.remove("d-none");
-
         void step2.offsetWidth;
-
         step2.classList.remove("opacity-0");
 
-        elements.name.focus();
+        if (selectedType !== "upload") {
+          elements.name.focus();
+        }
       }, 300);
     }
 
     function selectType(type) {
-      isFolder = type === "folder";
+      selectedType = type;
 
-      elements.folder.classList.toggle("is-active", isFolder);
-      elements.file.classList.toggle("is-active", !isFolder);
+      elements.folder.classList.toggle("is-active", selectedType === "folder");
+      elements.file.classList.toggle("is-active", selectedType === "file");
+      elements.upload.classList.toggle("is-active", selectedType === "upload");
 
-      if (isFolder) {
+      if (selectedType === "folder") {
+        elements.name.classList.remove("d-none");
+        elements.dropzone.classList.add("d-none");
         elements.content.classList.add("d-none");
-      } else {
+      } else if (selectedType === "file") {
+        elements.name.classList.remove("d-none");
+        elements.dropzone.classList.add("d-none");
         elements.content.classList.remove("d-none");
+      } else if (selectedType === "upload") {
+        elements.content.classList.add("d-none");
+        elements.name.classList.add("d-none");
+        elements.dropzone.classList.remove("d-none");
       }
     }
 
@@ -222,9 +296,9 @@ function openCustomModal(targetName, isFolderTarget) {
 
       resolve({
         asChild,
-        createFolder: isFolder,
+        itemType: selectedType, // Resolves string ("folder", "file", "upload")
         itemName: name,
-        fileContent: isFolder ? "" : elements.content.value,
+        fileContent: selectedType === "file" ? elements.content.value : "",
       });
     }
 
@@ -261,6 +335,10 @@ function openCustomModal(targetName, isFolderTarget) {
       selectType("file");
     };
 
+    elements.upload.onclick = () => {
+      selectType("upload");
+    };
+
     elements.cancel.onclick = () => {
       cleanup();
       resolve(null);
@@ -291,12 +369,12 @@ function sdDirectoryListener() {
       event.stopPropagation();
 
       sdDirectory.classList.remove("is-removing");
-      if (removeBtn) removeBtn.textContent = "REMOVE FILE";
+      if (removeBtn) removeBtn.textContent = "REMOVE ITEM";
 
       sdDirectory.classList.toggle("is-adding");
       addBtn.textContent = sdDirectory.classList.contains("is-adding")
         ? "CANCEL ADD"
-        : "ADD FILE";
+        : "ADD ITEM";
     });
   }
 
@@ -305,12 +383,12 @@ function sdDirectoryListener() {
       event.stopPropagation();
 
       sdDirectory.classList.remove("is-adding");
-      if (addBtn) addBtn.textContent = "ADD FILE";
+      if (addBtn) addBtn.textContent = "ADD ITEM";
 
       sdDirectory.classList.toggle("is-removing");
       removeBtn.textContent = sdDirectory.classList.contains("is-removing")
         ? "CANCEL REMOVE"
-        : "REMOVE FILE";
+        : "REMOVE ITEM";
     });
   }
 
@@ -341,10 +419,10 @@ function sdDirectoryListener() {
 
       if (!modalResult) return;
 
-      const { asChild, createFolder, itemName, fileContent } = modalResult;
+      const { asChild, itemType, itemName, fileContent } = modalResult;
 
       sdDirectory.classList.remove("is-adding");
-      addBtn.textContent = "ADD FILE";
+      addBtn.textContent = "ADD ITEM";
 
       let payloadParent = "root";
 
@@ -364,8 +442,8 @@ function sdDirectoryListener() {
 
       const payload = {
         name: itemName,
-        type: createFolder ? "folder" : "file",
-        ...(createFolder ? {} : { content: fileContent }),
+        type: itemType, // Send string directly ("folder", "file", or "upload")
+        ...(itemType === "file" ? { content: fileContent } : {}),
         parent: payloadParent,
       };
 
@@ -425,7 +503,7 @@ function sdDirectoryListener() {
 
       // Exit remove mode immediately
       sdDirectory.classList.remove("is-removing");
-      removeBtn.textContent = "REMOVE FILE";
+      removeBtn.textContent = "REMOVE ITEM";
 
       fetch("/remove_payload", {
         method: "POST",

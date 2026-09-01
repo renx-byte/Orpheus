@@ -57,6 +57,7 @@ void add_handle() {
 }
 
 void remove_handle() {
+
   String body = server.arg("plain");
   JsonDocument json_obj;
   DeserializationError err = deserializeJson(json_obj, body);
@@ -70,6 +71,19 @@ void remove_handle() {
   response_web = Storage::get_sd_html_structure();
 
   server.send(200, "text/html", response_web);
+}
+
+void handle_song_upload() {
+
+  String song_name = server.header("X-Song-Name");
+  int chunk_index = server.header("X-Chunk-Index").toInt();
+  int total_chunk = server.header("X-Total-Chunks").toInt();
+
+  Serial.println(song_name);
+  Serial.println(chunk_index);
+  Serial.println(total_chunk);
+
+  server.send(200, "text/plain", "OK");
 }
 
 void setup() {
@@ -90,7 +104,14 @@ void setup() {
   Serial.println("WiFi Connected!");
 
   Serial.print("IP ADDRESS: ");
+
   Serial.println(WiFi.localIP());
+
+  const char *headerKeys[] = {"X-Song-Name", "X-Chunk-Index", "X-Total-Chunks"};
+  size_t headerKeysCount = sizeof(headerKeys) / sizeof(char *);
+  server.collectHeaders(headerKeys, headerKeysCount);
+
+  server.on("/upload_song", HTTP_POST, handle_song_upload);
 
   server.on("/", HTTP_GET, serve_webpage);
 

@@ -44,9 +44,9 @@ String Storage::get_sd_html_structure() {
 
   html += "  <div class=\"options-container\">\n";
   html +=
-      "    <button class=\"result-button\" id=\"add-file\">ADD FILE</button>\n";
+      "    <button class=\"result-button\" id=\"add-file\">ADD ITEM</button>\n";
   html += "    <button class=\"result-button\" id=\"remove-file\">REMOVE "
-          "FILE</button>\n";
+          "ITEM</button>\n";
   html += "  </div>\n";
 
   html += "</div>";
@@ -190,7 +190,7 @@ bool Storage::add_payload_sd(const JsonDocument &payload) {
     }
   }
 
-  return false; // Fallback if type is neither "folder" nor "file"
+  return false;
 }
 
 bool Storage::remove_dir_recursive(String dirPath) {
@@ -244,7 +244,7 @@ void Storage::remove_payload_sd(const JsonDocument &payload) {
 bool Storage::begin() {
   SPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);
 
-  if (!SD.begin(PIN::SD_CS, SPI, 10000000)) {
+  if (!SD.begin(PIN::SD_CS, SPI, 40000000)) {
     Serial.println("SD mount failed");
     return false;
   }
