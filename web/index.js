@@ -112,6 +112,7 @@ function openCustomModal(targetName, isFolderTarget) {
               <button id="btn-file" class="result-button modal-btn small btn-type">
                 FILE
               </button>
+
             </div>
             
             <input
@@ -280,44 +281,60 @@ function openCustomModal(targetName, isFolderTarget) {
 // ============================================================
 function sdDirectoryListener() {
   const addBtn = document.getElementById("add-file");
+  const removeBtn = document.getElementById("remove-file");
   const sdDirectory = document.getElementById("sd-directory");
 
-  if (!addBtn || !sdDirectory) return;
+  if (!sdDirectory) return;
 
-  addBtn.addEventListener("click", (event) => {
-    event.stopPropagation();
+  if (addBtn) {
+    addBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
 
-    sdDirectory.classList.toggle("is-adding");
+      sdDirectory.classList.remove("is-removing");
+      if (removeBtn) removeBtn.textContent = "REMOVE FILE";
 
-    addBtn.textContent = sdDirectory.classList.contains("is-adding")
-      ? "CANCEL ADD"
-      : "ADD FILE";
-  });
+      sdDirectory.classList.toggle("is-adding");
+      addBtn.textContent = sdDirectory.classList.contains("is-adding")
+        ? "CANCEL ADD"
+        : "ADD FILE";
+    });
+  }
+
+  if (removeBtn) {
+    removeBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      sdDirectory.classList.remove("is-adding");
+      if (addBtn) addBtn.textContent = "ADD FILE";
+
+      sdDirectory.classList.toggle("is-removing");
+      removeBtn.textContent = sdDirectory.classList.contains("is-removing")
+        ? "CANCEL REMOVE"
+        : "REMOVE FILE";
+    });
+  }
 
   sdDirectory.addEventListener("click", async (event) => {
-    if (!sdDirectory.classList.contains("is-adding")) return;
-
     const target = event.target;
-
     const isFolder = target.classList.contains("folder");
-
     const isFile =
       target.classList.contains("file") || target.classList.contains("size");
 
-    if (isFolder || isFile) {
+    if (!isFolder && !isFile) return;
+
+    // --- ADD LOGIC (Folders Only) ---
+    if (sdDirectory.classList.contains("is-adding")) {
+      // If we are in add mode, restrict clicks strictly to folders
+      if (!isFolder) return;
+
       event.stopPropagation();
 
       const clickedLi = target.closest("li");
-
       let targetName = "";
-
       const folderSpan = clickedLi.querySelector(".folder");
-      const fileSpan = clickedLi.querySelector(".file");
 
       if (folderSpan) {
         targetName = folderSpan.textContent.trim();
-      } else if (fileSpan) {
-        targetName = fileSpan.textContent.trim();
       }
 
       const modalResult = await openCustomModal(targetName, !!folderSpan);
@@ -326,23 +343,17 @@ function sdDirectoryListener() {
 
       const { asChild, createFolder, itemName, fileContent } = modalResult;
 
-      // Exit add mode
       sdDirectory.classList.remove("is-adding");
       addBtn.textContent = "ADD FILE";
 
-      // Determine parent folder
       let payloadParent = "root";
 
       if (asChild && folderSpan) {
-        // Targeted folder becomes the parent
         payloadParent = targetName;
       } else {
-        // Sibling placement or file target
         const parentLi = clickedLi.parentElement.closest("li");
-
         if (parentLi) {
           const parentFolderSpan = parentLi.querySelector(".folder");
-
           if (parentFolderSpan) {
             payloadParent = parentFolderSpan.textContent.trim();
           }
@@ -358,26 +369,80 @@ function sdDirectoryListener() {
         parent: payloadParent,
       };
 
-      console.log("Sending payload:", payload);
-
       fetch("/create_payload", {
         method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-        .then((response) => response.json())
-
-        .then((data) => {
-          console.log("ESP32 Response:", data);
+        .then((response) => response.text())
+        .then((html) => {
+          const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
+          if (fetchWrapper) {
+            fetchWrapper.innerHTML = html;
+            sdDirectoryListener();
+            const newSdDirectory = document.getElementById("sd-directory");
+            if (newSdDirectory) newSdDirectory.classList.add("is-visible");
+          }
         })
+        .catch((error) => console.error("Payload request failed:", error));
+    } else if (sdDirectory.classList.contains("is-removing")) {
+      event.stopPropagation();
 
-        .catch((error) => {
-          console.error("Payload request failed:", error);
-        });
+      let clickedLi = target.closest("li");
+      let pathParts = [];
+      let currentLi = clickedLi;
+
+      // Traverse up the tree to build the absolute path
+      while (currentLi && currentLi.closest("#sd-directory")) {
+        let folderSpan = Array.from(currentLi.children).find((el) =>
+          el.classList.contains("folder"),
+        );
+        let fileSpan = Array.from(currentLi.children).find((el) =>
+          el.classList.contains("file"),
+        );
+
+        if (folderSpan) {
+          pathParts.unshift(folderSpan.textContent.trim().replace("/", ""));
+        } else if (fileSpan) {
+          pathParts.unshift(fileSpan.textContent.trim());
+        }
+
+        let parentUl = currentLi.parentElement;
+        if (!parentUl || parentUl.tagName.toLowerCase() !== "ul") break;
+
+        let parentLi = parentUl.parentElement.closest("li");
+        if (!parentLi) break;
+        currentLi = parentLi;
+      }
+
+      let fullPath = "/" + pathParts.join("/");
+
+      if (
+        !confirm(`Are you sure you want to permanently delete:\n${fullPath}?`)
+      ) {
+        return;
+      }
+
+      // Exit remove mode immediately
+      sdDirectory.classList.remove("is-removing");
+      removeBtn.textContent = "REMOVE FILE";
+
+      fetch("/remove_payload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: fullPath }),
+      })
+        .then((response) => response.text())
+        .then((html) => {
+          const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
+          if (fetchWrapper) {
+            fetchWrapper.innerHTML = html;
+            sdDirectoryListener();
+            const newSdDirectory = document.getElementById("sd-directory");
+            if (newSdDirectory) newSdDirectory.classList.add("is-visible");
+          }
+        })
+        .catch((error) => console.error("Remove request failed:", error));
     }
   });
 }

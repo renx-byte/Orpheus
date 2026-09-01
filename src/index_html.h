@@ -36,37 +36,34 @@ const char index_html[] PROGMEM = R"rawliteral(
   );
 
   /* Cohesive Modern Terminal Palette */
-  --bg-main: #0a0b10; /* Deep dark slate background */
-  --bg-panel: #1e1e2e; /* Slightly lighter elevated panel */
+  --bg-main: #0a0b10;
+  --bg-panel: #1e1e2e;
 
-  --text-main: #cdd6f4; /* Soft off-white for high readability */
+  --text-main: #cdd6f4;
 
   --soft-red: #d0311e;
   --soft-blue: #4274d9;
 
   --accent-yellow: #ffb900;
-  --accent-gold: #f9e2af; /* Soft gold for headings */
-  --accent-cyan: #89dceb; /* Vibrant cyan for interactive elements */
-  --accent-blue: #89b4fa; /* Deep blue for borders */
+  --accent-gold: #f9e2af;
+  --accent-cyan: #89dceb;
+  --accent-blue: #89b4fa;
 
-  --shadow-color: #11111b; /* Darker slate for shadows instead of harsh black */
+  --shadow-color: #11111b;
 }
-/* ============================================================
-   BACKGROUND OPTION 2: PARALLAX STARFIELD
-   ============================================================ */
+
 body::before,
 body::after {
   content: "";
   position: fixed;
   top: 0;
   left: 0;
-  width: 200vw; /* Double width so it can scroll seamlessly */
+  width: 200vw;
   height: 100vh;
   z-index: -1;
   pointer-events: none;
 }
 
-/* Foreground stars (larger, moving faster) */
 body::before {
   background-image:
     radial-gradient(
@@ -98,7 +95,6 @@ body::before {
   animation: starDrift 30s linear infinite;
 }
 
-/* Background stars (smaller, moving slower to create depth) */
 body::after {
   background-image:
     radial-gradient(
@@ -144,7 +140,6 @@ body::after {
     transform: translate(0, 0);
   }
   100% {
-    /* Moves the background exactly enough to seamlessly loop */
     transform: translate(59.4px, 59.4px);
   }
 }
@@ -167,9 +162,6 @@ h5 {
   margin: 0;
 }
 
-/* ============================================================
-   HEADER AREA
-   ============================================================ */
 .header-area {
   height: 10vh;
   text-align: center;
@@ -209,9 +201,6 @@ h5 {
   }
 }
 
-/* ============================================================
-   MAIN LAYOUT
-   ============================================================ */
 .main-content {
   height: 85vh;
   display: flex;
@@ -222,7 +211,7 @@ h5 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 30vw; /* Slightly tighter to bring elements closer */
+  width: 30vw;
 }
 
 .result-area {
@@ -233,9 +222,6 @@ h5 {
   width: 70vw;
 }
 
-/* ============================================================
-   CARDS
-   ============================================================ */
 .selection-card {
   position: relative;
   display: flex;
@@ -244,15 +230,12 @@ h5 {
   min-width: 250px;
   height: 60px;
   margin: 15px 0;
-
-  /* Sleek outlined look by default */
   color: var(--accent-cyan);
   background: var(--bg-panel);
   border: 3px solid var(--accent-blue);
   box-shadow: 6px 6px 0 0 var(--shadow-color);
   clip-path: var(--pixel-shape);
   cursor: pointer;
-
   transition:
     transform 300ms ease,
     background-color 300ms ease,
@@ -261,11 +244,9 @@ h5 {
 }
 
 .selection-card:hover {
-  color: var(--bg-main); /* Dark text on bright background */
+  color: var(--bg-main);
   background-color: var(--accent-cyan);
   border-color: var(--accent-cyan);
-
-  /* Physical push effect instead of just scaling */
   transform: translate(-3px, -3px);
   box-shadow: 9px 9px 0 0 var(--shadow-color);
 }
@@ -276,9 +257,6 @@ h5 {
   text-transform: uppercase;
 }
 
-/* ============================================================
-   RESULT CONTAINER
-   ============================================================ */
 #result-container {
   position: relative;
   width: 50vw;
@@ -286,11 +264,9 @@ h5 {
   display: flex;
   flex-direction: column;
   padding: 40px;
-
   background-color: #00000062;
   border: 3px solid #313244;
   box-shadow: 12px 12px 0 0 var(--shadow-color);
-
   clip-path: var(--pixel-shape);
   transition:
     border-color 400ms ease,
@@ -299,7 +275,6 @@ h5 {
 
 #result-container:hover,
 #result-container.is-active {
-  /* cursor: pointer; */
   transform: scale(1.01);
   border-color: var(--accent-cyan);
 }
@@ -329,7 +304,7 @@ h5 {
   letter-spacing: 2px;
   line-height: 1.8;
   color: var(--text-main);
-  flex-grow: 1; /* Pushes the 'Click to enter' to the bottom */
+  flex-grow: 1;
 }
 
 .result-prompt {
@@ -339,7 +314,6 @@ h5 {
   animation: pulse 2s infinite;
 }
 
-/* Adds a subtle breathing effect to the call to action */
 @keyframes pulse {
   0%,
   100% {
@@ -373,7 +347,7 @@ h5 {
 #sd-directory .file::before {
   content: "└─ ";
   font-family: monospace;
-  color: var(--accent-cyan); /* Subtle grey branch line */
+  color: var(--accent-cyan);
   font-weight: bold;
 }
 
@@ -391,10 +365,8 @@ h5 {
 
 .options-container {
   position: absolute;
-
   left: 50%;
   transform: translateX(-50%);
-
   bottom: 40px;
 }
 
@@ -405,11 +377,8 @@ h5 {
   height: 70px;
   background-color: transparent;
   clip-path: var(--pixel-shape);
-
   box-shadow: 6px 6px 0 0 var(--shadow-color);
-  clip-path: var(--pixel-shape);
   cursor: pointer;
-
   margin: 0 20px;
   transition: transform 300ms ease;
 }
@@ -417,7 +386,6 @@ h5 {
 .size {
   font-size: 22px;
   color: var(--accent-cyan);
-
   margin-left: 20px;
 }
 
@@ -445,7 +413,6 @@ h5 {
   transform: translate(-3px, -3px);
 }
 
-/* Hide item add buttons by default */
 .add-item-btn {
   display: none;
   margin-right: 6px;
@@ -458,32 +425,45 @@ h5 {
   padding: 0 4px;
 }
 
-/* Show + buttons when add mode is active */
 #sd-directory.is-adding .add-item-btn {
   display: inline-block;
 }
 
 .add-item-btn {
-  padding: 05px 10px;
+  padding: 5px 10px;
 }
 
-/* When add mode is active, make elements look clickable */
-#sd-directory.is-adding span.folder,
-#sd-directory.is-adding span.file {
+/* === ADD MODE STYLES (Folders Only) === */
+#sd-directory.is-adding span.folder {
   cursor: pointer;
-  border-bottom: 1px dashed #28a745; /* Green dashed line indicator */
+  border-bottom: 1px dashed #28a745;
 }
 
-/* Add a hover effect so they know exactly which item they are targeting */
-#sd-directory.is-adding span.folder:hover,
-#sd-directory.is-adding span.file:hover {
+#sd-directory.is-adding span.folder:hover {
   background-color: rgba(40, 167, 69, 0.2);
   border-radius: 3px;
 }
 
-/* ============================================================
-   CUSTOM MODAL STYLES
-   ============================================================ */
+#sd-directory.is-adding span.file,
+#sd-directory.is-adding span.size {
+  cursor: default;
+  border-bottom: none;
+  background-color: transparent;
+}
+
+/* === REMOVE MODE STYLES (Files and Folders) === */
+#sd-directory.is-removing span.folder,
+#sd-directory.is-removing span.file {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--soft-red);
+}
+
+#sd-directory.is-removing span.folder:hover,
+#sd-directory.is-removing span.file:hover {
+  background-color: rgba(208, 49, 30, 0.2);
+  border-radius: 3px;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -574,7 +554,6 @@ h5 {
   font-size: 14px;
 }
 
-/* Button Variants */
 .btn-sibling {
   border-color: var(--soft-blue);
   color: var(--soft-blue);
@@ -631,7 +610,6 @@ h5 {
   animation: shake 300ms;
 }
 
-/* Utility Classes */
 .d-none {
   display: none !important;
 }
@@ -664,7 +642,6 @@ h5 {
 
     <main class="main-content">
       <section class="selection-area">
-        <!-- Using data attributes makes the JS completely dynamic and scalable -->
         <div
           class="selection-card"
           data-title="SD CARD"
@@ -692,30 +669,6 @@ h5 {
 
       <section class="result-area">
         <div class="result-container" id="result-container">
-          <!-- <div id="sd-directory">
-            <ul>
-              <li>
-                <span class="folder">System Volume Information/</span>
-                <ul>
-                  <li>
-                    <span class="file">WPSettings.dat</span>
-                    <span class="size">(0.0 kb)</span>
-                  </li>
-                  <li>
-                    <span class="file">IndexerVolumeGuid</span>
-                    <span class="size">(0.1 kb)</span>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-            <div class="options-container">
-              <button class="result-button" id="add-file">ADD FILE</button>
-              <button class="result-button" id="remove-file">
-                REMOVE FILE
-              </button>
-            </div>
-          </div> -->
-
           <div class="result-wrapper" id="result-wrapper">
             <h5 class="result-heading" id="result-heading"></h5>
             <div class="description-container">
@@ -841,6 +794,7 @@ function openCustomModal(targetName, isFolderTarget) {
               <button id="btn-file" class="result-button modal-btn small btn-type">
                 FILE
               </button>
+
             </div>
             
             <input
@@ -1009,44 +963,60 @@ function openCustomModal(targetName, isFolderTarget) {
 // ============================================================
 function sdDirectoryListener() {
   const addBtn = document.getElementById("add-file");
+  const removeBtn = document.getElementById("remove-file");
   const sdDirectory = document.getElementById("sd-directory");
 
-  if (!addBtn || !sdDirectory) return;
+  if (!sdDirectory) return;
 
-  addBtn.addEventListener("click", (event) => {
-    event.stopPropagation();
+  if (addBtn) {
+    addBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
 
-    sdDirectory.classList.toggle("is-adding");
+      sdDirectory.classList.remove("is-removing");
+      if (removeBtn) removeBtn.textContent = "REMOVE FILE";
 
-    addBtn.textContent = sdDirectory.classList.contains("is-adding")
-      ? "CANCEL ADD"
-      : "ADD FILE";
-  });
+      sdDirectory.classList.toggle("is-adding");
+      addBtn.textContent = sdDirectory.classList.contains("is-adding")
+        ? "CANCEL ADD"
+        : "ADD FILE";
+    });
+  }
+
+  if (removeBtn) {
+    removeBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      sdDirectory.classList.remove("is-adding");
+      if (addBtn) addBtn.textContent = "ADD FILE";
+
+      sdDirectory.classList.toggle("is-removing");
+      removeBtn.textContent = sdDirectory.classList.contains("is-removing")
+        ? "CANCEL REMOVE"
+        : "REMOVE FILE";
+    });
+  }
 
   sdDirectory.addEventListener("click", async (event) => {
-    if (!sdDirectory.classList.contains("is-adding")) return;
-
     const target = event.target;
-
     const isFolder = target.classList.contains("folder");
-
     const isFile =
       target.classList.contains("file") || target.classList.contains("size");
 
-    if (isFolder || isFile) {
+    if (!isFolder && !isFile) return;
+
+    // --- ADD LOGIC (Folders Only) ---
+    if (sdDirectory.classList.contains("is-adding")) {
+      // If we are in add mode, restrict clicks strictly to folders
+      if (!isFolder) return;
+
       event.stopPropagation();
 
       const clickedLi = target.closest("li");
-
       let targetName = "";
-
       const folderSpan = clickedLi.querySelector(".folder");
-      const fileSpan = clickedLi.querySelector(".file");
 
       if (folderSpan) {
         targetName = folderSpan.textContent.trim();
-      } else if (fileSpan) {
-        targetName = fileSpan.textContent.trim();
       }
 
       const modalResult = await openCustomModal(targetName, !!folderSpan);
@@ -1055,23 +1025,17 @@ function sdDirectoryListener() {
 
       const { asChild, createFolder, itemName, fileContent } = modalResult;
 
-      // Exit add mode
       sdDirectory.classList.remove("is-adding");
       addBtn.textContent = "ADD FILE";
 
-      // Determine parent folder
       let payloadParent = "root";
 
       if (asChild && folderSpan) {
-        // Targeted folder becomes the parent
         payloadParent = targetName;
       } else {
-        // Sibling placement or file target
         const parentLi = clickedLi.parentElement.closest("li");
-
         if (parentLi) {
           const parentFolderSpan = parentLi.querySelector(".folder");
-
           if (parentFolderSpan) {
             payloadParent = parentFolderSpan.textContent.trim();
           }
@@ -1087,26 +1051,80 @@ function sdDirectoryListener() {
         parent: payloadParent,
       };
 
-      console.log("Sending payload:", payload);
-
       fetch("/create_payload", {
         method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-        .then((response) => response.json())
-
-        .then((data) => {
-          console.log("ESP32 Response:", data);
+        .then((response) => response.text())
+        .then((html) => {
+          const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
+          if (fetchWrapper) {
+            fetchWrapper.innerHTML = html;
+            sdDirectoryListener();
+            const newSdDirectory = document.getElementById("sd-directory");
+            if (newSdDirectory) newSdDirectory.classList.add("is-visible");
+          }
         })
+        .catch((error) => console.error("Payload request failed:", error));
+    } else if (sdDirectory.classList.contains("is-removing")) {
+      event.stopPropagation();
 
-        .catch((error) => {
-          console.error("Payload request failed:", error);
-        });
+      let clickedLi = target.closest("li");
+      let pathParts = [];
+      let currentLi = clickedLi;
+
+      // Traverse up the tree to build the absolute path
+      while (currentLi && currentLi.closest("#sd-directory")) {
+        let folderSpan = Array.from(currentLi.children).find((el) =>
+          el.classList.contains("folder"),
+        );
+        let fileSpan = Array.from(currentLi.children).find((el) =>
+          el.classList.contains("file"),
+        );
+
+        if (folderSpan) {
+          pathParts.unshift(folderSpan.textContent.trim().replace("/", ""));
+        } else if (fileSpan) {
+          pathParts.unshift(fileSpan.textContent.trim());
+        }
+
+        let parentUl = currentLi.parentElement;
+        if (!parentUl || parentUl.tagName.toLowerCase() !== "ul") break;
+
+        let parentLi = parentUl.parentElement.closest("li");
+        if (!parentLi) break;
+        currentLi = parentLi;
+      }
+
+      let fullPath = "/" + pathParts.join("/");
+
+      if (
+        !confirm(`Are you sure you want to permanently delete:\n${fullPath}?`)
+      ) {
+        return;
+      }
+
+      // Exit remove mode immediately
+      sdDirectory.classList.remove("is-removing");
+      removeBtn.textContent = "REMOVE FILE";
+
+      fetch("/remove_payload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: fullPath }),
+      })
+        .then((response) => response.text())
+        .then((html) => {
+          const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
+          if (fetchWrapper) {
+            fetchWrapper.innerHTML = html;
+            sdDirectoryListener();
+            const newSdDirectory = document.getElementById("sd-directory");
+            if (newSdDirectory) newSdDirectory.classList.add("is-visible");
+          }
+        })
+        .catch((error) => console.error("Remove request failed:", error));
     }
   });
 }

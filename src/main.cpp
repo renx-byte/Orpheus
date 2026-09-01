@@ -35,7 +35,7 @@ void click_handle() {
   }
 }
 
-void payload_handle() {
+void add_handle() {
 
   String body = server.arg("plain");
 
@@ -48,6 +48,28 @@ void payload_handle() {
   }
 
   Serial.println(body);
+
+  Storage::add_payload_sd(json_obj);
+
+  response_web = Storage::get_sd_html_structure();
+
+  server.send(200, "text/html", response_web);
+}
+
+void remove_handle() {
+  String body = server.arg("plain");
+  JsonDocument json_obj;
+  DeserializationError err = deserializeJson(json_obj, body);
+
+  if (err) {
+    Serial.println("JSON parsing failed in remove_handle.");
+  }
+
+  Storage::remove_payload_sd(json_obj);
+
+  response_web = Storage::get_sd_html_structure();
+
+  server.send(200, "text/html", response_web);
 }
 
 void setup() {
@@ -74,7 +96,9 @@ void setup() {
 
   server.on("/selection_click", HTTP_POST, click_handle);
 
-  server.on("/create_payload", HTTP_POST, payload_handle);
+  server.on("/create_payload", HTTP_POST, add_handle);
+
+  server.on("/remove_payload", HTTP_POST, remove_handle);
 
   server.begin();
 
