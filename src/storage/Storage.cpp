@@ -47,6 +47,8 @@ String Storage::get_sd_html_structure() {
       "    <button class=\"result-button\" id=\"add-file\">ADD ITEM</button>\n";
   html += "    <button class=\"result-button\" id=\"remove-file\">REMOVE "
           "ITEM</button>\n";
+  html += "    <button class=\"result-button\" id=\"download-file\">GET "
+          "ITEM</button>\n";
   html += "  </div>\n";
 
   html += "</div>";
@@ -59,7 +61,6 @@ void Storage::print_sd_directory(File dir, int depth) {
     if (!entry)
       break;
 
-    // Indent based on directory tree depth
     for (int i = 0; i < depth; i++) {
       Serial.print("  ");
     }
@@ -67,14 +68,11 @@ void Storage::print_sd_directory(File dir, int depth) {
     if (entry.isDirectory()) {
       Serial.print("[DIR] ");
       Serial.println(entry.name());
-
-      // Recurse into subdirectories with increased depth
       print_sd_directory(entry, depth + 1);
     } else {
       Serial.print("      ");
       Serial.print(entry.name());
 
-      // Calculate file size formatting
       double bytes = entry.size();
       double size = (bytes < 1000000) ? (bytes / 1000.0) : (bytes / 1000000.0);
       const char *unit = (bytes < 1000000) ? " KB" : " MB";
@@ -89,7 +87,6 @@ void Storage::print_sd_directory(File dir, int depth) {
   }
 }
 
-// Call this function to start printing from root
 void Storage::print_sd_structure() {
   File root = SD.open("/");
   if (!root) {
@@ -103,7 +100,6 @@ void Storage::print_sd_structure() {
   Serial.println("----------------------------------");
 }
 
-// Helper function: Recursively searches the SD card to locate a folder by name
 String Storage::resolve_parent_path(File dir, const char *targetFolder) {
   while (true) {
     File entry = dir.openNextFile();
@@ -111,14 +107,12 @@ String Storage::resolve_parent_path(File dir, const char *targetFolder) {
       break;
 
     if (entry.isDirectory()) {
-      // Check if current directory name matches the target parent name
       if (strcmp(entry.name(), targetFolder) == 0) {
         String foundPath = String(entry.path());
         entry.close();
         return foundPath;
       }
 
-      // Recurse into subdirectories
       String nestedPath = resolve_parent_path(entry, targetFolder);
       if (nestedPath.length() > 0) {
         entry.close();
@@ -127,7 +121,7 @@ String Storage::resolve_parent_path(File dir, const char *targetFolder) {
     }
     entry.close();
   }
-  return ""; // Not found in this branch
+  return "";
 }
 
 bool Storage::add_payload_sd(const JsonDocument &payload) {
@@ -138,12 +132,10 @@ bool Storage::add_payload_sd(const JsonDocument &payload) {
 
   String targetPath = "";
 
-  // 1. Handle Root Path
   if (strcmp(parent, "root") == 0 || strcmp(parent, "/") == 0 ||
       strlen(parent) == 0) {
     targetPath = "/";
   } else {
-    // 2. Perform Recursive Search to find the folder's real absolute path
     File root = SD.open("/");
     if (root) {
       targetPath = resolve_parent_path(root, parent);
@@ -157,14 +149,12 @@ bool Storage::add_payload_sd(const JsonDocument &payload) {
     }
   }
 
-  // Ensure trailing slash for building the full file/folder path
   if (!targetPath.endsWith("/")) {
     targetPath += "/";
   }
 
   String fullPath = targetPath + String(name);
 
-  // 3. Create Folder
   if (strcmp(type, "folder") == 0) {
     if (SD.mkdir(fullPath.c_str())) {
       Serial.print("Created folder: ");
@@ -175,9 +165,7 @@ bool Storage::add_payload_sd(const JsonDocument &payload) {
       Serial.println(fullPath);
       return false;
     }
-  }
-  // 4. Create File
-  else if (strcmp(type, "file") == 0) {
+  } else if (strcmp(type, "file") == 0) {
     File newFile = SD.open(fullPath.c_str(), FILE_WRITE);
     if (newFile) {
       if (strlen(content) > 0) {
@@ -224,7 +212,6 @@ bool Storage::remove_dir_recursive(String dirPath) {
 void Storage::remove_payload_sd(const JsonDocument &payload) {
   String path = payload["path"] | "";
 
-  // Protect against root deletion
   if (path.isEmpty() || path == "/")
     return;
 
@@ -240,6 +227,38 @@ void Storage::remove_payload_sd(const JsonDocument &payload) {
     SD.remove(path);
   }
 }
+
+File Storage::currentFile;
+
+void Storage::upload_start_sd(String song_name, int chunk_index) {
+  if (!song_name.startsWith("/")) {
+    song_name = "/" + song_name;
+  }
+
+  const char *mode = (chunk_index == 0) ? FILE_WRITE : FILE_APPEND;
+
+  currentFile = SD.open(song_name, mode);
+  if (!currentFile) {
+    Serial.print("Error: Failed to open file on SD for path: ");
+    Serial.println(song_name);
+  }
+}
+
+void Storage::upload_write_sd(uint8_t *buf, size_t size) {
+  if (currentFile) {
+    currentFile.write(buf, size);
+  } else {
+    Serial.println("Error: Attempted write with no file open");
+  }
+}
+
+void Storage::upload_end_sd() {
+  if (currentFile) {
+    currentFile.close();
+  }
+}
+
+File Storage::download_file_sd(const String &path) { return SD.open(path); }
 
 bool Storage::begin() {
   SPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);

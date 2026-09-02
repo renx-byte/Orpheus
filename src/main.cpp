@@ -74,16 +74,50 @@ void remove_handle() {
 }
 
 void handle_song_upload() {
+  HTTPUpload &upload = server.upload();
 
-  String song_name = server.header("X-Song-Name");
-  int chunk_index = server.header("X-Chunk-Index").toInt();
-  int total_chunk = server.header("X-Total-Chunks").toInt();
+  if (upload.status == UPLOAD_FILE_START) {
+    String song_name = server.header("X-Song-Name");
+    int chunk_index = server.header("X-Chunk-Index").toInt();
 
-  Serial.println(song_name);
-  Serial.println(chunk_index);
-  Serial.println(total_chunk);
+    Storage::upload_start_sd(song_name, chunk_index);
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    Storage::upload_write_sd(upload.buf, upload.currentSize);
+  } else if (upload.status == UPLOAD_FILE_END) {
+    Storage::upload_end_sd();
+    // Update the cached SD directory after upload completes
+    response_web = Storage::get_sd_html_structure();
+  }
+}
 
-  server.send(200, "text/plain", "OK");
+void handle_download() {
+  if (!server.hasArg("path")) {
+    server.send(400, "text/plain", "Missing path");
+    return;
+  }
+
+  String path = server.arg("path");
+
+  if (path.indexOf("..") != -1 || !path.startsWith("/")) {
+    server.send(400, "text/plain", "Invalid path");
+    return;
+  }
+
+  File file = Storage::download_file_sd(path);
+
+  if (!file) {
+    server.send(404, "text/plain", "File not found");
+    return;
+  }
+
+  String filename = path.substring(path.lastIndexOf('/') + 1);
+
+  server.sendHeader("Content-Disposition",
+                    "attachment; filename=\"" + filename + "\"");
+
+  server.streamFile(file, "application/octet-stream");
+
+  file.close();
 }
 
 void setup() {
@@ -107,11 +141,14 @@ void setup() {
 
   Serial.println(WiFi.localIP());
 
-  const char *headerKeys[] = {"X-Song-Name", "X-Chunk-Index", "X-Total-Chunks"};
+  const char *headerKeys[] = {"X-Song-Name", "X-Chunk-Index", "X-Total-Chunks",
+                              "Content-Length"};
   size_t headerKeysCount = sizeof(headerKeys) / sizeof(char *);
   server.collectHeaders(headerKeys, headerKeysCount);
 
-  server.on("/upload_song", HTTP_POST, handle_song_upload);
+  server.on(
+      "/upload_song", HTTP_POST, []() { server.send(200, "text/plain", "OK"); },
+      handle_song_upload);
 
   server.on("/", HTTP_GET, serve_webpage);
 
@@ -120,6 +157,8 @@ void setup() {
   server.on("/create_payload", HTTP_POST, add_handle);
 
   server.on("/remove_payload", HTTP_POST, remove_handle);
+
+  server.on("/download_file", HTTP_GET, handle_download);
 
   server.begin();
 

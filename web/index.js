@@ -78,15 +78,17 @@ function hideResult() {
 
 async function uploadSong(data, iteration, totalIterations, songName) {
   try {
+    const formData = new FormData();
+    formData.append("file", data, songName);
+
     const response = await fetch("/upload_song", {
       method: "POST",
       headers: {
-        "Content-Type": "application/octet-stream",
         "X-Song-Name": songName,
         "X-Chunk-Index": iteration.toString(),
         "X-Total-Chunks": totalIterations.toString(),
       },
-      body: data,
+      body: formData,
     });
 
     if (!response.ok) {
@@ -157,11 +159,18 @@ function openCustomModal(targetName, isFolderTarget) {
             ></textarea>
 
             <div id="drop-zone" class="d-none">
+              <p>Upload your media here</p>
+              <input type="file" id="file-input" hidden>
+            </div>
 
-            <p>Upload your media here</p>
-
-            <input type="file" id="file-input" hidden>
-            
+            <!-- Progress ring -->
+            <div id="upload-progress-container" class="d-none">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="#333" stroke-width="8"/>
+                <circle id="progress-circle" cx="60" cy="60" r="54" fill="none" stroke="var(--accent-cyan)" stroke-width="8" stroke-linecap="round" stroke-dasharray="339.292" stroke-dashoffset="339.292" transform="rotate(-90 60 60)"/>
+                <text x="60" y="60" text-anchor="middle" dy="0.35em" fill="var(--accent-cyan)" font-size="18" id="progress-percent">0%</text>
+              </svg>
+              <p id="upload-filename" class="upload-filename"></p>
             </div>
 
             <div class="modal-btn-group mt-10">
@@ -197,6 +206,10 @@ function openCustomModal(targetName, isFolderTarget) {
       content: document.getElementById("modal-input-content"),
       cancel: document.getElementById("btn-cancel"),
       submit: document.getElementById("btn-submit"),
+      progressContainer: document.getElementById("upload-progress-container"),
+      progressCircle: document.getElementById("progress-circle"),
+      progressPercent: document.getElementById("progress-percent"),
+      uploadFilename: document.getElementById("upload-filename"),
     };
 
     elements.dropzone.addEventListener("click", (event) => {
@@ -208,10 +221,21 @@ function openCustomModal(targetName, isFolderTarget) {
       const chunkSize = 32768;
 
       const songFile = event.target.files[0];
+      if (!songFile) return;
+
       const songName = songFile.name;
       const songSize = songFile.size;
 
       const totalIterations = Math.ceil(songSize / chunkSize);
+
+      // Show progress ring, hide drop zone and action buttons
+      elements.dropzone.classList.add("d-none");
+      elements.submit.classList.add("d-none");
+      elements.cancel.classList.add("d-none");
+      elements.progressContainer.classList.remove("d-none");
+      elements.uploadFilename.textContent = songName;
+      elements.progressCircle.style.strokeDashoffset = "339.292";
+      elements.progressPercent.textContent = "0%";
 
       for (let i = 0; i < totalIterations; i++) {
         const start = i * chunkSize;
@@ -222,13 +246,53 @@ function openCustomModal(targetName, isFolderTarget) {
 
         if (result == "error") {
           console.log("aborted at chunk: ", i);
-          break;
+          elements.progressContainer.classList.add("d-none");
+          elements.dropzone.classList.remove("d-none");
+          elements.submit.classList.remove("d-none");
+          elements.cancel.classList.remove("d-none");
+          elements.fileInput.value = "";
+          return;
+        }
+
+        const percent = Math.round(((i + 1) / totalIterations) * 100);
+        elements.progressPercent.textContent = `${percent}%`;
+        const circleLength = 339.292;
+        const offset = circleLength - (percent / 100) * circleLength;
+        elements.progressCircle.style.strokeDashoffset = offset;
+      }
+
+      console.log("Upload complete for file: ", songName);
+
+      // Upload successful: close modal and refresh SD directory
+      cleanup();
+
+      const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
+      if (fetchWrapper) {
+        try {
+          const response = await fetch("/selection_click", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: "SD CARD" }),
+          });
+          if (response.ok) {
+            const html = await response.text();
+            fetchWrapper.innerHTML = html;
+            sdDirectoryListener();
+            const newSdDirectory = document.getElementById("sd-directory");
+            if (newSdDirectory) {
+              requestAnimationFrame(() => {
+                newSdDirectory.classList.add("is-visible");
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to refresh SD directory after upload:", err);
         }
       }
     });
 
     let asChild = false;
-    let selectedType = "folder"; // Expecting string: "folder", "file", or "upload"
+    let selectedType = "folder";
 
     requestAnimationFrame(() => {
       overlay.classList.add("is-visible");
@@ -296,7 +360,7 @@ function openCustomModal(targetName, isFolderTarget) {
 
       resolve({
         asChild,
-        itemType: selectedType, // Resolves string ("folder", "file", "upload")
+        itemType: selectedType,
         itemName: name,
         fileContent: selectedType === "file" ? elements.content.value : "",
       });
@@ -360,35 +424,55 @@ function openCustomModal(targetName, isFolderTarget) {
 function sdDirectoryListener() {
   const addBtn = document.getElementById("add-file");
   const removeBtn = document.getElementById("remove-file");
+  const downloadBtn = document.getElementById("download-file");
   const sdDirectory = document.getElementById("sd-directory");
 
   if (!sdDirectory) return;
 
+  // Helper to reset all modes
+  function resetModes() {
+    sdDirectory.classList.remove("is-adding", "is-removing", "is-downloading");
+    if (addBtn) addBtn.textContent = "ADD ITEM";
+    if (removeBtn) removeBtn.textContent = "REMOVE ITEM";
+    if (downloadBtn) downloadBtn.textContent = "GET ITEM";
+  }
+
   if (addBtn) {
     addBtn.addEventListener("click", (event) => {
       event.stopPropagation();
-
-      sdDirectory.classList.remove("is-removing");
-      if (removeBtn) removeBtn.textContent = "REMOVE ITEM";
-
-      sdDirectory.classList.toggle("is-adding");
-      addBtn.textContent = sdDirectory.classList.contains("is-adding")
-        ? "CANCEL ADD"
-        : "ADD ITEM";
+      if (sdDirectory.classList.contains("is-adding")) {
+        resetModes();
+      } else {
+        resetModes();
+        sdDirectory.classList.add("is-adding");
+        addBtn.textContent = "CANCEL ADD";
+      }
     });
   }
 
   if (removeBtn) {
     removeBtn.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (sdDirectory.classList.contains("is-removing")) {
+        resetModes();
+      } else {
+        resetModes();
+        sdDirectory.classList.add("is-removing");
+        removeBtn.textContent = "CANCEL REMOVE";
+      }
+    });
+  }
 
-      sdDirectory.classList.remove("is-adding");
-      if (addBtn) addBtn.textContent = "ADD ITEM";
-
-      sdDirectory.classList.toggle("is-removing");
-      removeBtn.textContent = sdDirectory.classList.contains("is-removing")
-        ? "CANCEL REMOVE"
-        : "REMOVE ITEM";
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (sdDirectory.classList.contains("is-downloading")) {
+        resetModes();
+      } else {
+        resetModes();
+        sdDirectory.classList.add("is-downloading");
+        downloadBtn.textContent = "CANCEL GET";
+      }
     });
   }
 
@@ -400,49 +484,38 @@ function sdDirectoryListener() {
 
     if (!isFolder && !isFile) return;
 
-    // --- ADD LOGIC (Folders Only) ---
+    // --- ADD MODE (folders only) ---
     if (sdDirectory.classList.contains("is-adding")) {
-      // If we are in add mode, restrict clicks strictly to folders
       if (!isFolder) return;
-
       event.stopPropagation();
 
       const clickedLi = target.closest("li");
       let targetName = "";
       const folderSpan = clickedLi.querySelector(".folder");
-
-      if (folderSpan) {
-        targetName = folderSpan.textContent.trim();
-      }
+      if (folderSpan) targetName = folderSpan.textContent.trim();
 
       const modalResult = await openCustomModal(targetName, !!folderSpan);
-
       if (!modalResult) return;
 
       const { asChild, itemType, itemName, fileContent } = modalResult;
-
-      sdDirectory.classList.remove("is-adding");
-      addBtn.textContent = "ADD ITEM";
+      resetModes();
 
       let payloadParent = "root";
-
       if (asChild && folderSpan) {
         payloadParent = targetName;
       } else {
         const parentLi = clickedLi.parentElement.closest("li");
         if (parentLi) {
           const parentFolderSpan = parentLi.querySelector(".folder");
-          if (parentFolderSpan) {
+          if (parentFolderSpan)
             payloadParent = parentFolderSpan.textContent.trim();
-          }
         }
       }
-
       payloadParent = payloadParent.replace(/\/$/, "");
 
       const payload = {
         name: itemName,
-        type: itemType, // Send string directly ("folder", "file", or "upload")
+        type: itemType,
         ...(itemType === "file" ? { content: fileContent } : {}),
         parent: payloadParent,
       };
@@ -463,14 +536,15 @@ function sdDirectoryListener() {
           }
         })
         .catch((error) => console.error("Payload request failed:", error));
-    } else if (sdDirectory.classList.contains("is-removing")) {
+    }
+    // --- REMOVE MODE (files & folders) ---
+    else if (sdDirectory.classList.contains("is-removing")) {
       event.stopPropagation();
 
       let clickedLi = target.closest("li");
       let pathParts = [];
       let currentLi = clickedLi;
 
-      // Traverse up the tree to build the absolute path
       while (currentLi && currentLi.closest("#sd-directory")) {
         let folderSpan = Array.from(currentLi.children).find((el) =>
           el.classList.contains("folder"),
@@ -487,7 +561,6 @@ function sdDirectoryListener() {
 
         let parentUl = currentLi.parentElement;
         if (!parentUl || parentUl.tagName.toLowerCase() !== "ul") break;
-
         let parentLi = parentUl.parentElement.closest("li");
         if (!parentLi) break;
         currentLi = parentLi;
@@ -497,13 +570,10 @@ function sdDirectoryListener() {
 
       if (
         !confirm(`Are you sure you want to permanently delete:\n${fullPath}?`)
-      ) {
+      )
         return;
-      }
 
-      // Exit remove mode immediately
-      sdDirectory.classList.remove("is-removing");
-      removeBtn.textContent = "REMOVE ITEM";
+      resetModes();
 
       fetch("/remove_payload", {
         method: "POST",
@@ -522,13 +592,50 @@ function sdDirectoryListener() {
         })
         .catch((error) => console.error("Remove request failed:", error));
     }
+    // --- DOWNLOAD MODE (files only) ---
+    else if (sdDirectory.classList.contains("is-downloading")) {
+      if (!isFile) return; // only files
+      event.stopPropagation();
+
+      let clickedLi = target.closest("li");
+      let pathParts = [];
+      let currentLi = clickedLi;
+
+      while (currentLi && currentLi.closest("#sd-directory")) {
+        let folderSpan = Array.from(currentLi.children).find((el) =>
+          el.classList.contains("folder"),
+        );
+        let fileSpan = Array.from(currentLi.children).find((el) =>
+          el.classList.contains("file"),
+        );
+
+        if (folderSpan) {
+          pathParts.unshift(folderSpan.textContent.trim().replace("/", ""));
+        } else if (fileSpan) {
+          pathParts.unshift(fileSpan.textContent.trim());
+        }
+
+        let parentUl = currentLi.parentElement;
+        if (!parentUl || parentUl.tagName.toLowerCase() !== "ul") break;
+        let parentLi = parentUl.parentElement.closest("li");
+        if (!parentLi) break;
+        currentLi = parentLi;
+      }
+
+      let fullPath = "/" + pathParts.join("/");
+
+      // Trigger browser download
+      window.location.href =
+        "/download_file?path=" + encodeURIComponent(fullPath);
+
+      resetModes();
+    }
   });
 }
 
 selectionCards.forEach((card) => {
   card.addEventListener("mouseenter", (event) => {
     const { title, description } = event.currentTarget.dataset;
-
     showResult(title, description);
   });
 
@@ -540,46 +647,30 @@ selectionCards.forEach((card) => {
 
   card.addEventListener("click", (event) => {
     event.stopPropagation();
-
     clickFlag = true;
 
     resultWrapper.classList.remove("is-visible");
     resultWrapper.style.display = "none";
-
     resultContainer.classList.add("is-active");
 
     const title = event.currentTarget.dataset.title;
 
     fetch("/selection_click", {
       method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        title,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
     })
       .then((response) => response.text())
-
       .then((html) => {
         let fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
-
         if (!fetchWrapper) {
           fetchWrapper = document.createElement("div");
-
           fetchWrapper.id = "dynamic-fetch-wrapper";
-
           resultContainer.appendChild(fetchWrapper);
         }
-
         fetchWrapper.innerHTML = html;
-
         sdDirectoryListener();
-
         const sdDirectory = document.getElementById("sd-directory");
-
         if (sdDirectory) {
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -588,10 +679,7 @@ selectionCards.forEach((card) => {
           });
         }
       })
-
-      .catch((error) => {
-        console.error("Selection request failed:", error);
-      });
+      .catch((error) => console.error("Selection request failed:", error));
   });
 });
 
@@ -602,10 +690,8 @@ document.body.addEventListener("click", (event) => {
   ) {
     return;
   }
-
   if (clickFlag) {
     clickFlag = false;
-
     hideResult();
   }
 });
