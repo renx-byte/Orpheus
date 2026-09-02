@@ -159,7 +159,7 @@ function openCustomModal(targetName, isFolderTarget) {
             ></textarea>
 
             <div id="drop-zone" class="d-none">
-              <p>Upload your media here</p>
+              <p>CLICK TO UPLOAD</p>
               <input type="file" id="file-input" hidden>
             </div>
 

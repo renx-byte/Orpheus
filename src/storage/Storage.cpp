@@ -17,8 +17,8 @@ void Storage::generate_html_directory(File dir, String &html) {
       html += "<span class=\"file\">" + String(entry.name()) + "</span>";
 
       double bytes = entry.size();
-      double size = (bytes < 1000000) ? (bytes / 1000.0) : (bytes / 1000000.0);
-      const char *unit = (bytes < 1000000) ? " kb" : " Mb";
+      double size = (bytes < 1048576) ? (bytes / 1024.0) : (bytes / 1048576.0);
+      const char *unit = (bytes < 1048576) ? " kb" : " Mb";
 
       html += " <span class=\"size\">(" + String(size, 1) + unit + ")</span>\n";
     }
@@ -74,8 +74,8 @@ void Storage::print_sd_directory(File dir, int depth) {
       Serial.print(entry.name());
 
       double bytes = entry.size();
-      double size = (bytes < 1000000) ? (bytes / 1000.0) : (bytes / 1000000.0);
-      const char *unit = (bytes < 1000000) ? " KB" : " MB";
+      double size = (bytes < 1048576) ? (bytes / 1024.0) : (bytes / 1048576.0);
+      const char *unit = (bytes < 1048576) ? " KB" : " MB";
 
       Serial.print(" (");
       Serial.print(size, 1);

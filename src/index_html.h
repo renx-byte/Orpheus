@@ -452,7 +452,6 @@ h5 {
   background-color: transparent;
 }
 
-/* === REMOVE MODE STYLES (Files and Folders) === */
 #sd-directory.is-removing span.folder,
 #sd-directory.is-removing span.file {
   cursor: pointer;
@@ -595,6 +594,7 @@ h5 {
   outline: none;
   clip-path: var(--pixel-shape);
   transition: border-color 200ms ease;
+  letter-spacing: 1px;
 }
 
 .modal-input {
@@ -632,7 +632,7 @@ h5 {
 }
 
 #drop-zone {
-  border: 3px dashed var(--bg-panel);
+  border: 3px dashed var(--accent-blue);
   font-size: 14px;
   letter-spacing: 3px;
   color: var(--accent-cyan);
@@ -916,7 +916,7 @@ function openCustomModal(targetName, isFolderTarget) {
             ></textarea>
 
             <div id="drop-zone" class="d-none">
-              <p>Upload your media here</p>
+              <p>CLICK TO UPLOAD</p>
               <input type="file" id="file-input" hidden>
             </div>
 
