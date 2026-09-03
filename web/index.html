@@ -50,8 +50,146 @@
               <h5 class="result-prompt">CLICK TO ENTER...</h5>
             </div>
           </div>
+
+          <!-- Static container for dynamic content (SD card, etc.) -->
+          <div id="dynamic-fetch-wrapper" class="d-none">
+            <!-- SD Directory section (hidden by default) -->
+            <div id="sd-directory" class="d-none">
+              <ul id="sd-directory-list"></ul>
+              <div class="options-container">
+                <button class="result-button" id="add-file">ADD ITEM</button>
+                <button class="result-button" id="remove-file">
+                  REMOVE ITEM
+                </button>
+                <button class="result-button" id="download-file">
+                  GET ITEM
+                </button>
+              </div>
+            </div>
+
+            <!-- Placeholder for other sections -->
+            <div id="placeholder-section" class="d-none">
+              <h2>Coming soon</h2>
+            </div>
+          </div>
         </div>
       </section>
     </main>
+
+    <!-- Modal markup (static) -->
+    <div id="custom-modal-overlay" class="modal-overlay">
+      <div id="custom-modal" class="modal-container">
+        <h5 class="modal-heading">ADD NEW ITEM</h5>
+
+        <!-- Step 1: Placement -->
+        <div id="modal-step-1" class="modal-step">
+          <p class="modal-text">
+            Placement relative to
+            <span class="highlight-text" id="modal-target-name"></span>
+          </p>
+
+          <div class="modal-btn-group">
+            <button
+              id="btn-sibling"
+              class="result-button modal-btn btn-sibling"
+            >
+              SIBLING
+            </button>
+            <button id="btn-child" class="result-button modal-btn btn-child">
+              CHILD
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Details -->
+        <div id="modal-step-2" class="modal-step d-none opacity-0">
+          <div class="modal-btn-group">
+            <button
+              id="btn-folder"
+              class="result-button modal-btn small btn-type"
+            >
+              FOLDER
+            </button>
+            <button
+              id="btn-file"
+              class="result-button modal-btn small btn-type"
+            >
+              FILE
+            </button>
+            <button
+              id="btn-upload"
+              class="result-button modal-btn small btn-type"
+            >
+              UPLOAD
+            </button>
+          </div>
+
+          <input
+            id="modal-input-name"
+            class="modal-input"
+            type="text"
+            placeholder="Enter Name..."
+            autocomplete="off"
+          />
+          <textarea
+            id="modal-input-content"
+            class="modal-textarea d-none"
+            placeholder="Enter file content (optional)..."
+          ></textarea>
+
+          <div id="drop-zone" class="d-none">
+            <p>CLICK TO UPLOAD</p>
+            <input type="file" id="file-input" hidden />
+          </div>
+
+          <div id="upload-progress-container" class="d-none">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke="#333"
+                stroke-width="8"
+              />
+              <circle
+                id="progress-circle"
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke="var(--accent-cyan)"
+                stroke-width="8"
+                stroke-linecap="round"
+                stroke-dasharray="339.292"
+                stroke-dashoffset="339.292"
+                transform="rotate(-90 60 60)"
+              />
+              <text
+                x="60"
+                y="60"
+                text-anchor="middle"
+                dy="0.35em"
+                fill="var(--accent-cyan)"
+                font-size="18"
+                id="progress-percent"
+              >
+                0%
+              </text>
+            </svg>
+            <p id="upload-filename" class="upload-filename"></p>
+          </div>
+
+          <div class="modal-btn-group mt-10">
+            <button id="btn-cancel" class="result-button modal-btn btn-cancel">
+              CANCEL
+            </button>
+            <button id="btn-submit" class="result-button modal-btn btn-submit">
+              CREATE
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

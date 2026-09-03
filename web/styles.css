@@ -691,3 +691,20 @@ h5 {
   border-bottom: none;
   background-color: transparent;
 }
+
+.pixel-ring {
+  fill: none;
+  stroke: #333;
+  stroke-width: 8px;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}
+
+.pixel-ring.progress {
+  stroke: var(--accent-cyan);
+
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+
+  transition: stroke-dashoffset 0.3s ease;
+}

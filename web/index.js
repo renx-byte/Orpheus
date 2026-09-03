@@ -1,3 +1,6 @@
+// ============================================================
+// Typewriter Effect
+// ============================================================
 const initTypewriter = () => {
   const heading = document.getElementById("typewriter-heading");
   const phrases = ["renx-byte...", "Test ENV..."];
@@ -37,6 +40,9 @@ const initTypewriter = () => {
 
 initTypewriter();
 
+// ============================================================
+// Result Container (Hover / Click)
+// ============================================================
 const resultContainer = document.getElementById("result-container");
 const resultWrapper = document.getElementById("result-wrapper");
 const resultHeading = document.getElementById("result-heading");
@@ -62,20 +68,22 @@ function hideResult() {
   }
 
   const sdDirectory = document.getElementById("sd-directory");
-
   if (sdDirectory && !clickFlag) {
     sdDirectory.classList.remove("is-visible");
-
+    // Optionally hide completely after transition
     setTimeout(() => {
-      const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
-
-      if (!clickFlag && fetchWrapper) {
-        fetchWrapper.remove();
+      if (!clickFlag) {
+        sdDirectory.classList.add("d-none");
+        const dynamicWrapper = document.getElementById("dynamic-fetch-wrapper");
+        if (dynamicWrapper) dynamicWrapper.classList.add("d-none");
       }
     }, 600);
   }
 }
 
+// ============================================================
+// Upload Helper
+// ============================================================
 async function uploadSong(data, iteration, totalIterations, songName) {
   try {
     const formData = new FormData();
@@ -91,108 +99,22 @@ async function uploadSong(data, iteration, totalIterations, songName) {
       body: formData,
     });
 
-    if (!response.ok) {
-      return "error";
-    }
-
+    if (!response.ok) return "error";
     return await response.text();
   } catch (error) {
     return "error";
   }
 }
 
+// ============================================================
+// Modal Logic (unchanged, using static HTML in index.html)
+// ============================================================
 function openCustomModal(targetName, isFolderTarget) {
   return new Promise((resolve) => {
-    const modalHTML = `
-      <div id="custom-modal-overlay" class="modal-overlay">
-        <div id="custom-modal" class="modal-container">
-          <h5 class="modal-heading">ADD NEW ITEM</h5>
-          
-          <!-- Step 1: Placement -->
-          <div id="modal-step-1" class="modal-step">
-            <p class="modal-text">
-              Placement relative to
-              <span class="highlight-text">${targetName}</span>
-            </p>
-
-            <div class="modal-btn-group">
-              <button id="btn-sibling" class="result-button modal-btn btn-sibling">
-                SIBLING
-              </button>
-
-              <button id="btn-child" class="result-button modal-btn btn-child">
-                CHILD
-              </button>
-            </div>
-          </div>
-
-          <!-- Step 2: Details -->
-          <div id="modal-step-2" class="modal-step d-none opacity-0">
-
-            <div class="modal-btn-group">
-              <button id="btn-folder" class="result-button modal-btn small btn-type">
-                FOLDER
-              </button>
-
-              <button id="btn-file" class="result-button modal-btn small btn-type">
-                FILE
-              </button>
-
-              <button id="btn-upload" class="result-button modal-btn small btn-type">
-                UPLOAD
-              </button>
-
-            </div>
-            
-            <input
-              id="modal-input-name"
-              class="modal-input"
-              type="text"
-              placeholder="Enter Name..."
-              autocomplete="off"
-            >
-
-            <textarea
-              id="modal-input-content"
-              class="modal-textarea d-none"
-              placeholder="Enter file content (optional)..."
-            ></textarea>
-
-            <div id="drop-zone" class="d-none">
-              <p>CLICK TO UPLOAD</p>
-              <input type="file" id="file-input" hidden>
-            </div>
-
-            <!-- Progress ring -->
-            <div id="upload-progress-container" class="d-none">
-              <svg width="120" height="120" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="54" fill="none" stroke="#333" stroke-width="8"/>
-                <circle id="progress-circle" cx="60" cy="60" r="54" fill="none" stroke="var(--accent-cyan)" stroke-width="8" stroke-linecap="round" stroke-dasharray="339.292" stroke-dashoffset="339.292" transform="rotate(-90 60 60)"/>
-                <text x="60" y="60" text-anchor="middle" dy="0.35em" fill="var(--accent-cyan)" font-size="18" id="progress-percent">0%</text>
-              </svg>
-              <p id="upload-filename" class="upload-filename"></p>
-            </div>
-
-            <div class="modal-btn-group mt-10">
-              <button id="btn-cancel" class="result-button modal-btn btn-cancel">
-                CANCEL
-              </button>
-
-              <button id="btn-submit" class="result-button modal-btn btn-submit">
-                CREATE
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML("beforeend", modalHTML);
-
     const overlay = document.getElementById("custom-modal-overlay");
     const step1 = document.getElementById("modal-step-1");
     const step2 = document.getElementById("modal-step-2");
+    const targetNameSpan = document.getElementById("modal-target-name");
 
     const elements = {
       sibling: document.getElementById("btn-sibling"),
@@ -212,118 +134,51 @@ function openCustomModal(targetName, isFolderTarget) {
       uploadFilename: document.getElementById("upload-filename"),
     };
 
-    elements.dropzone.addEventListener("click", (event) => {
-      event.stopPropagation();
-      elements.fileInput.click();
-    });
+    // Reset modal state
+    elements.name.value = "";
+    elements.content.value = "";
+    elements.fileInput.value = "";
+    elements.progressContainer.classList.add("d-none");
+    elements.dropzone.classList.remove("d-none");
+    elements.submit.classList.remove("d-none");
+    elements.cancel.classList.remove("d-none");
+    elements.content.classList.add("d-none");
+    elements.name.classList.remove("d-none");
 
-    elements.fileInput.addEventListener("change", async (event) => {
-      const chunkSize = 32768;
-
-      const songFile = event.target.files[0];
-      if (!songFile) return;
-
-      const songName = songFile.name;
-      const songSize = songFile.size;
-
-      const totalIterations = Math.ceil(songSize / chunkSize);
-
-      // Show progress ring, hide drop zone and action buttons
-      elements.dropzone.classList.add("d-none");
-      elements.submit.classList.add("d-none");
-      elements.cancel.classList.add("d-none");
-      elements.progressContainer.classList.remove("d-none");
-      elements.uploadFilename.textContent = songName;
-      elements.progressCircle.style.strokeDashoffset = "339.292";
-      elements.progressPercent.textContent = "0%";
-
-      for (let i = 0; i < totalIterations; i++) {
-        const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, songSize);
-        const chunk = songFile.slice(start, end);
-
-        const result = await uploadSong(chunk, i, totalIterations, songName);
-
-        if (result == "error") {
-          console.log("aborted at chunk: ", i);
-          elements.progressContainer.classList.add("d-none");
-          elements.dropzone.classList.remove("d-none");
-          elements.submit.classList.remove("d-none");
-          elements.cancel.classList.remove("d-none");
-          elements.fileInput.value = "";
-          return;
-        }
-
-        const percent = Math.round(((i + 1) / totalIterations) * 100);
-        elements.progressPercent.textContent = `${percent}%`;
-        const circleLength = 339.292;
-        const offset = circleLength - (percent / 100) * circleLength;
-        elements.progressCircle.style.strokeDashoffset = offset;
-      }
-
-      console.log("Upload complete for file: ", songName);
-
-      // Upload successful: close modal and refresh SD directory
-      cleanup();
-
-      const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
-      if (fetchWrapper) {
-        try {
-          const response = await fetch("/selection_click", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: "SD CARD" }),
-          });
-          if (response.ok) {
-            const html = await response.text();
-            fetchWrapper.innerHTML = html;
-            sdDirectoryListener();
-            const newSdDirectory = document.getElementById("sd-directory");
-            if (newSdDirectory) {
-              requestAnimationFrame(() => {
-                newSdDirectory.classList.add("is-visible");
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Failed to refresh SD directory after upload:", err);
-        }
-      }
-    });
+    targetNameSpan.textContent = targetName;
 
     let asChild = false;
     let selectedType = "folder";
 
-    requestAnimationFrame(() => {
-      overlay.classList.add("is-visible");
-    });
+    if (!isFolderTarget) {
+      step1.classList.add("d-none");
+      step2.classList.remove("d-none", "opacity-0");
+      selectedType = "file";
+      elements.name.focus();
+    } else {
+      step1.classList.remove("d-none", "opacity-0");
+      step2.classList.add("d-none", "opacity-0");
+    }
+
+    overlay.classList.add("is-visible");
 
     function cleanup() {
       overlay.classList.remove("is-visible");
-
-      setTimeout(() => {
-        overlay.remove();
-      }, 300);
     }
 
     function expandToStep2() {
       step1.classList.add("opacity-0");
-
       setTimeout(() => {
         step1.classList.add("d-none");
         step2.classList.remove("d-none");
         void step2.offsetWidth;
         step2.classList.remove("opacity-0");
-
-        if (selectedType !== "upload") {
-          elements.name.focus();
-        }
+        if (selectedType !== "upload") elements.name.focus();
       }, 300);
     }
 
     function selectType(type) {
       selectedType = type;
-
       elements.folder.classList.toggle("is-active", selectedType === "folder");
       elements.file.classList.toggle("is-active", selectedType === "file");
       elements.upload.classList.toggle("is-active", selectedType === "upload");
@@ -345,19 +200,12 @@ function openCustomModal(targetName, isFolderTarget) {
 
     function submitForm() {
       const name = elements.name.value.trim();
-
       if (!name) {
         elements.name.classList.add("is-error");
-
-        setTimeout(() => {
-          elements.name.classList.remove("is-error");
-        }, 300);
-
+        setTimeout(() => elements.name.classList.remove("is-error"), 300);
         return;
       }
-
       cleanup();
-
       resolve({
         asChild,
         itemType: selectedType,
@@ -366,70 +214,167 @@ function openCustomModal(targetName, isFolderTarget) {
       });
     }
 
-    if (!isFolderTarget) {
+    elements.fileInput.onchange = async (event) => {
+      const chunkSize = 32768;
+      const songFile = event.target.files[0];
+      if (!songFile) return;
+
+      const songName = songFile.name;
+      const songSize = songFile.size;
+      const totalIterations = Math.ceil(songSize / chunkSize);
+
+      elements.dropzone.classList.add("d-none");
+      elements.submit.classList.add("d-none");
+      elements.cancel.classList.add("d-none");
+      elements.progressContainer.classList.remove("d-none");
+      elements.uploadFilename.textContent = songName;
+      elements.progressCircle.style.strokeDashoffset = "339.292";
+      elements.progressPercent.textContent = "0%";
+
+      for (let i = 0; i < totalIterations; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, songSize);
+        const chunk = songFile.slice(start, end);
+
+        const result = await uploadSong(chunk, i, totalIterations, songName);
+        if (result == "error") {
+          console.log("aborted at chunk: ", i);
+          elements.progressContainer.classList.add("d-none");
+          elements.dropzone.classList.remove("d-none");
+          elements.submit.classList.remove("d-none");
+          elements.cancel.classList.remove("d-none");
+          elements.fileInput.value = "";
+          return;
+        }
+
+        const percent = Math.round(((i + 1) / totalIterations) * 100);
+        elements.progressPercent.textContent = `${percent}%`;
+        const circleLength = 339.292;
+        const offset = circleLength - (percent / 100) * circleLength;
+        elements.progressCircle.style.strokeDashoffset = offset;
+      }
+
+      console.log("Upload complete for file: ", songName);
+      cleanup();
+
+      // Refresh directory after upload
+      await refreshSdDirectory();
+    };
+
+    elements.dropzone.onclick = (e) => {
+      e.stopPropagation();
+      elements.fileInput.click();
+    };
+
+    elements.sibling.onclick = () => {
       asChild = false;
-
-      step1.classList.add("d-none");
-      step2.classList.remove("d-none", "opacity-0");
-
-      selectType("file");
-
-      setTimeout(() => {
-        elements.name.focus();
-      }, 100);
-    } else {
-      elements.sibling.onclick = () => {
-        asChild = false;
-        expandToStep2();
-      };
-
-      elements.child.onclick = () => {
-        asChild = true;
-        expandToStep2();
-      };
-
-      selectType("folder");
-    }
-
-    elements.folder.onclick = () => {
-      selectType("folder");
+      expandToStep2();
     };
-
-    elements.file.onclick = () => {
-      selectType("file");
+    elements.child.onclick = () => {
+      asChild = true;
+      expandToStep2();
     };
-
-    elements.upload.onclick = () => {
-      selectType("upload");
-    };
-
+    elements.folder.onclick = () => selectType("folder");
+    elements.file.onclick = () => selectType("file");
+    elements.upload.onclick = () => selectType("upload");
     elements.cancel.onclick = () => {
       cleanup();
       resolve(null);
     };
-
     elements.submit.onclick = submitForm;
+    elements.name.onkeydown = (e) => {
+      if (e.key === "Enter") submitForm();
+    };
 
-    elements.name.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        submitForm();
-      }
-    });
+    if (!isFolderTarget) selectType("file");
+    else selectType("folder");
   });
 }
 
 // ============================================================
-// SD CARD DIRECTORY LISTENER
+// Directory Rendering (only dynamic list items)
+// ============================================================
+function buildDirectoryDOM(node, container) {
+  const ul = document.createElement("ul");
+
+  if (node.type === "folder") {
+    node.children?.forEach((child) => {
+      const li = document.createElement("li");
+
+      if (child.type === "folder") {
+        const span = document.createElement("span");
+        span.className = "folder";
+        span.textContent = child.name + "/";
+        li.appendChild(span);
+        buildDirectoryDOM(child, li); // recursion
+      } else {
+        const span = document.createElement("span");
+        span.className = "file";
+        span.textContent = child.name;
+
+        const sizeSpan = document.createElement("span");
+        sizeSpan.className = "size";
+        const sizeText =
+          child.size < 1048576
+            ? (child.size / 1024).toFixed(1) + " kb"
+            : (child.size / 1048576).toFixed(1) + " Mb";
+        sizeSpan.textContent = `(${sizeText})`;
+
+        li.appendChild(span);
+        li.appendChild(sizeSpan);
+      }
+
+      ul.appendChild(li);
+    });
+  }
+
+  container.appendChild(ul);
+}
+
+function renderDirectory(data) {
+  const listElement = document.getElementById("sd-directory-list");
+  if (!listElement) return;
+
+  listElement.innerHTML = ""; // clear existing list
+  buildDirectoryDOM(data, listElement);
+}
+
+async function refreshSdDirectory() {
+  try {
+    const response = await fetch("/sd_directory");
+    if (!response.ok) throw new Error("Failed to fetch directory");
+    const data = await response.json();
+    renderDirectory(data);
+
+    // Show SD directory and its wrapper
+    const sdDirectory = document.getElementById("sd-directory");
+    const dynamicWrapper = document.getElementById("dynamic-fetch-wrapper");
+    if (sdDirectory) {
+      sdDirectory.classList.remove("d-none");
+      // Trigger opacity transition
+      requestAnimationFrame(() => {
+        sdDirectory.classList.add("is-visible");
+      });
+    }
+    if (dynamicWrapper) {
+      dynamicWrapper.classList.remove("d-none");
+    }
+  } catch (err) {
+    console.error("Directory refresh failed:", err);
+  }
+}
+
+// ============================================================
+// SD Directory Interaction Listener
 // ============================================================
 function sdDirectoryListener() {
+  const sdDirectory = document.getElementById("sd-directory");
+  if (!sdDirectory) return;
+
   const addBtn = document.getElementById("add-file");
   const removeBtn = document.getElementById("remove-file");
   const downloadBtn = document.getElementById("download-file");
-  const sdDirectory = document.getElementById("sd-directory");
 
-  if (!sdDirectory) return;
-
-  // Helper to reset all modes
   function resetModes() {
     sdDirectory.classList.remove("is-adding", "is-removing", "is-downloading");
     if (addBtn) addBtn.textContent = "ADD ITEM";
@@ -438,8 +383,8 @@ function sdDirectoryListener() {
   }
 
   if (addBtn) {
-    addBtn.addEventListener("click", (event) => {
-      event.stopPropagation();
+    addBtn.onclick = (e) => {
+      e.stopPropagation();
       if (sdDirectory.classList.contains("is-adding")) {
         resetModes();
       } else {
@@ -447,12 +392,12 @@ function sdDirectoryListener() {
         sdDirectory.classList.add("is-adding");
         addBtn.textContent = "CANCEL ADD";
       }
-    });
+    };
   }
 
   if (removeBtn) {
-    removeBtn.addEventListener("click", (event) => {
-      event.stopPropagation();
+    removeBtn.onclick = (e) => {
+      e.stopPropagation();
       if (sdDirectory.classList.contains("is-removing")) {
         resetModes();
       } else {
@@ -460,12 +405,12 @@ function sdDirectoryListener() {
         sdDirectory.classList.add("is-removing");
         removeBtn.textContent = "CANCEL REMOVE";
       }
-    });
+    };
   }
 
   if (downloadBtn) {
-    downloadBtn.addEventListener("click", (event) => {
-      event.stopPropagation();
+    downloadBtn.onclick = (e) => {
+      e.stopPropagation();
       if (sdDirectory.classList.contains("is-downloading")) {
         resetModes();
       } else {
@@ -473,10 +418,10 @@ function sdDirectoryListener() {
         sdDirectory.classList.add("is-downloading");
         downloadBtn.textContent = "CANCEL GET";
       }
-    });
+    };
   }
 
-  sdDirectory.addEventListener("click", async (event) => {
+  sdDirectory.onclick = async (event) => {
     const target = event.target;
     const isFolder = target.classList.contains("folder");
     const isFile =
@@ -484,7 +429,7 @@ function sdDirectoryListener() {
 
     if (!isFolder && !isFile) return;
 
-    // --- ADD MODE (folders only) ---
+    // ADD MODE
     if (sdDirectory.classList.contains("is-adding")) {
       if (!isFolder) return;
       event.stopPropagation();
@@ -492,7 +437,8 @@ function sdDirectoryListener() {
       const clickedLi = target.closest("li");
       let targetName = "";
       const folderSpan = clickedLi.querySelector(".folder");
-      if (folderSpan) targetName = folderSpan.textContent.trim();
+      if (folderSpan)
+        targetName = folderSpan.textContent.trim().replace(/\/$/, "");
 
       const modalResult = await openCustomModal(targetName, !!folderSpan);
       if (!modalResult) return;
@@ -508,7 +454,9 @@ function sdDirectoryListener() {
         if (parentLi) {
           const parentFolderSpan = parentLi.querySelector(".folder");
           if (parentFolderSpan)
-            payloadParent = parentFolderSpan.textContent.trim();
+            payloadParent = parentFolderSpan.textContent
+              .trim()
+              .replace(/\/$/, "");
         }
       }
       payloadParent = payloadParent.replace(/\/$/, "");
@@ -520,24 +468,19 @@ function sdDirectoryListener() {
         parent: payloadParent,
       };
 
-      fetch("/create_payload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-        .then((response) => response.text())
-        .then((html) => {
-          const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
-          if (fetchWrapper) {
-            fetchWrapper.innerHTML = html;
-            sdDirectoryListener();
-            const newSdDirectory = document.getElementById("sd-directory");
-            if (newSdDirectory) newSdDirectory.classList.add("is-visible");
-          }
-        })
-        .catch((error) => console.error("Payload request failed:", error));
+      try {
+        const response = await fetch("/create_payload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error("Create failed");
+        await refreshSdDirectory();
+      } catch (err) {
+        console.error("Payload request failed:", err);
+      }
     }
-    // --- REMOVE MODE (files & folders) ---
+    // REMOVE MODE
     else if (sdDirectory.classList.contains("is-removing")) {
       event.stopPropagation();
 
@@ -554,7 +497,7 @@ function sdDirectoryListener() {
         );
 
         if (folderSpan) {
-          pathParts.unshift(folderSpan.textContent.trim().replace("/", ""));
+          pathParts.unshift(folderSpan.textContent.trim().replace(/\/$/, ""));
         } else if (fileSpan) {
           pathParts.unshift(fileSpan.textContent.trim());
         }
@@ -575,26 +518,21 @@ function sdDirectoryListener() {
 
       resetModes();
 
-      fetch("/remove_payload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: fullPath }),
-      })
-        .then((response) => response.text())
-        .then((html) => {
-          const fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
-          if (fetchWrapper) {
-            fetchWrapper.innerHTML = html;
-            sdDirectoryListener();
-            const newSdDirectory = document.getElementById("sd-directory");
-            if (newSdDirectory) newSdDirectory.classList.add("is-visible");
-          }
-        })
-        .catch((error) => console.error("Remove request failed:", error));
+      try {
+        const response = await fetch("/remove_payload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: fullPath }),
+        });
+        if (!response.ok) throw new Error("Remove failed");
+        await refreshSdDirectory();
+      } catch (err) {
+        console.error("Remove request failed:", err);
+      }
     }
-    // --- DOWNLOAD MODE (files only) ---
+    // DOWNLOAD MODE
     else if (sdDirectory.classList.contains("is-downloading")) {
-      if (!isFile) return; // only files
+      if (!isFile) return;
       event.stopPropagation();
 
       let clickedLi = target.closest("li");
@@ -610,7 +548,7 @@ function sdDirectoryListener() {
         );
 
         if (folderSpan) {
-          pathParts.unshift(folderSpan.textContent.trim().replace("/", ""));
+          pathParts.unshift(folderSpan.textContent.trim().replace(/\/$/, ""));
         } else if (fileSpan) {
           pathParts.unshift(fileSpan.textContent.trim());
         }
@@ -623,16 +561,16 @@ function sdDirectoryListener() {
       }
 
       let fullPath = "/" + pathParts.join("/");
-
-      // Trigger browser download
       window.location.href =
         "/download_file?path=" + encodeURIComponent(fullPath);
-
       resetModes();
     }
-  });
+  };
 }
 
+// ============================================================
+// Selection Card Event Listeners
+// ============================================================
 selectionCards.forEach((card) => {
   card.addEventListener("mouseenter", (event) => {
     const { title, description } = event.currentTarget.dataset;
@@ -640,9 +578,7 @@ selectionCards.forEach((card) => {
   });
 
   card.addEventListener("mouseleave", () => {
-    if (!clickFlag) {
-      hideResult();
-    }
+    if (!clickFlag) hideResult();
   });
 
   card.addEventListener("click", (event) => {
@@ -654,35 +590,30 @@ selectionCards.forEach((card) => {
     resultContainer.classList.add("is-active");
 
     const title = event.currentTarget.dataset.title;
+    const dynamicWrapper = document.getElementById("dynamic-fetch-wrapper");
+    const sdDirectory = document.getElementById("sd-directory");
+    const placeholder = document.getElementById("placeholder-section");
 
-    fetch("/selection_click", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    })
-      .then((response) => response.text())
-      .then((html) => {
-        let fetchWrapper = document.getElementById("dynamic-fetch-wrapper");
-        if (!fetchWrapper) {
-          fetchWrapper = document.createElement("div");
-          fetchWrapper.id = "dynamic-fetch-wrapper";
-          resultContainer.appendChild(fetchWrapper);
-        }
-        fetchWrapper.innerHTML = html;
-        sdDirectoryListener();
-        const sdDirectory = document.getElementById("sd-directory");
-        if (sdDirectory) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              sdDirectory.classList.add("is-visible");
-            });
-          });
-        }
-      })
-      .catch((error) => console.error("Selection request failed:", error));
+    // Hide all sections first
+    if (sdDirectory) sdDirectory.classList.add("d-none");
+    if (placeholder) placeholder.classList.add("d-none");
+    if (dynamicWrapper) dynamicWrapper.classList.remove("d-none");
+
+    if (title === "SD CARD") {
+      // Show SD directory and fetch data
+      sdDirectory.classList.remove("d-none");
+      // Fetch and render directory
+      refreshSdDirectory();
+    } else {
+      // Show placeholder for other sections
+      placeholder.classList.remove("d-none");
+    }
   });
 });
 
+// ============================================================
+// Global Click Handler
+// ============================================================
 document.body.addEventListener("click", (event) => {
   if (
     event.target.closest("#result-container") ||
@@ -695,3 +626,5 @@ document.body.addEventListener("click", (event) => {
     hideResult();
   }
 });
+
+sdDirectoryListener();

@@ -6,71 +6,49 @@
 #include <WebServer.h>
 #include <WiFi.h>
 
-String response_web;
-
 WebServer server(80);
 
 void serve_webpage() { server.send(200, "text/html", index_html); }
 
 void click_handle() {
-
-  String body = server.arg("plain");
-
-  JsonDocument json_obj;
-
-  DeserializationError err = deserializeJson(json_obj, body);
-
-  if (err) {
-    Serial.println("JSON parsing failed.");
-  }
-
-  String title = json_obj["title"];
-
-  Serial.println(title);
-
-  if (title == "SD CARD") {
-    server.send(200, "text/html", response_web);
-  } else {
-    server.send(200, "text/html", "<h1>NOT SD CARD</h1>");
-  }
+  // This endpoint is now only used for non-SD CARD selections (if any)
+  server.send(200, "text/plain", "OK");
 }
 
 void add_handle() {
-
   String body = server.arg("plain");
-
   JsonDocument json_obj;
-
   DeserializationError err = deserializeJson(json_obj, body);
 
   if (err) {
-    Serial.println("JSON parsing failed.");
+    server.send(400, "application/json",
+                "{\"success\":false,\"error\":\"Invalid JSON\"}");
+    return;
   }
 
-  Serial.println(body);
+  bool success = Storage::add_payload_sd(json_obj);
 
-  Storage::add_payload_sd(json_obj);
-
-  response_web = Storage::get_sd_html_structure();
-
-  server.send(200, "text/html", response_web);
+  if (success) {
+    server.send(200, "application/json", "{\"success\":true}");
+  } else {
+    server.send(500, "application/json",
+                "{\"success\":false,\"error\":\"Failed to add payload\"}");
+  }
 }
 
 void remove_handle() {
-
   String body = server.arg("plain");
   JsonDocument json_obj;
   DeserializationError err = deserializeJson(json_obj, body);
 
   if (err) {
-    Serial.println("JSON parsing failed in remove_handle.");
+    server.send(400, "application/json",
+                "{\"success\":false,\"error\":\"Invalid JSON\"}");
+    return;
   }
 
   Storage::remove_payload_sd(json_obj);
-
-  response_web = Storage::get_sd_html_structure();
-
-  server.send(200, "text/html", response_web);
+  server.send(200, "application/json", "{\"success\":true}");
 }
 
 void handle_song_upload() {
@@ -79,14 +57,11 @@ void handle_song_upload() {
   if (upload.status == UPLOAD_FILE_START) {
     String song_name = server.header("X-Song-Name");
     int chunk_index = server.header("X-Chunk-Index").toInt();
-
     Storage::upload_start_sd(song_name, chunk_index);
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     Storage::upload_write_sd(upload.buf, upload.currentSize);
   } else if (upload.status == UPLOAD_FILE_END) {
     Storage::upload_end_sd();
-    // Update the cached SD directory after upload completes
-    response_web = Storage::get_sd_html_structure();
   }
 }
 
@@ -111,13 +86,15 @@ void handle_download() {
   }
 
   String filename = path.substring(path.lastIndexOf('/') + 1);
-
   server.sendHeader("Content-Disposition",
                     "attachment; filename=\"" + filename + "\"");
-
   server.streamFile(file, "application/octet-stream");
-
   file.close();
+}
+
+void handle_sd_directory() {
+  String json = Storage::get_sd_json_structure();
+  server.send(200, "application/json", json);
 }
 
 void setup() {
@@ -126,19 +103,14 @@ void setup() {
   Serial.println("Serial Monitor Initialized");
 
   Serial.print("Connecting to WiFi");
-
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-
   Serial.println("");
   Serial.println("WiFi Connected!");
-
   Serial.print("IP ADDRESS: ");
-
   Serial.println(WiFi.localIP());
 
   const char *headerKeys[] = {"X-Song-Name", "X-Chunk-Index", "X-Total-Chunks",
@@ -160,13 +132,13 @@ void setup() {
 
   server.on("/download_file", HTTP_GET, handle_download);
 
+  server.on("/sd_directory", HTTP_GET, handle_sd_directory);
+
   server.begin();
 
   Storage::begin();
 
-  response_web = Storage::get_sd_html_structure();
-
-  Serial.println("SD Card Directory Observed.");
+  Serial.println("SD Card Directory JSON endpoint ready.");
 }
 
 void loop() { server.handleClient(); }

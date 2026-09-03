@@ -1,59 +1,6 @@
 #include "Storage.h"
 
-void Storage::generate_html_directory(File dir, String &html) {
-  html += "<ul>\n";
-
-  while (true) {
-    File entry = dir.openNextFile();
-    if (!entry)
-      break;
-
-    html += "  <li>";
-
-    if (entry.isDirectory()) {
-      html += "<span class=\"folder\">" + String(entry.name()) + "/</span>\n";
-      generate_html_directory(entry, html);
-    } else {
-      html += "<span class=\"file\">" + String(entry.name()) + "</span>";
-
-      double bytes = entry.size();
-      double size = (bytes < 1048576) ? (bytes / 1024.0) : (bytes / 1048576.0);
-      const char *unit = (bytes < 1048576) ? " kb" : " Mb";
-
-      html += " <span class=\"size\">(" + String(size, 1) + unit + ")</span>\n";
-    }
-
-    html += "</li>\n";
-    entry.close();
-  }
-
-  html += "</ul>\n";
-}
-
-String Storage::get_sd_html_structure() {
-  File root = SD.open("/");
-  if (!root) {
-    return "<div id=\"sd-directory\"><p>Failed to open SD Card root "
-           "directory</p></div>";
-  }
-
-  String html = "<div id=\"sd-directory\">\n";
-
-  generate_html_directory(root, html);
-  root.close();
-
-  html += "  <div class=\"options-container\">\n";
-  html +=
-      "    <button class=\"result-button\" id=\"add-file\">ADD ITEM</button>\n";
-  html += "    <button class=\"result-button\" id=\"remove-file\">REMOVE "
-          "ITEM</button>\n";
-  html += "    <button class=\"result-button\" id=\"download-file\">GET "
-          "ITEM</button>\n";
-  html += "  </div>\n";
-
-  html += "</div>";
-  return html;
-}
+File Storage::currentFile;
 
 void Storage::print_sd_directory(File dir, int depth) {
   while (true) {
@@ -228,8 +175,6 @@ void Storage::remove_payload_sd(const JsonDocument &payload) {
   }
 }
 
-File Storage::currentFile;
-
 void Storage::upload_start_sd(String song_name, int chunk_index) {
   if (!song_name.startsWith("/")) {
     song_name = "/" + song_name;
@@ -272,4 +217,51 @@ bool Storage::begin() {
 
   print_sd_structure();
   return true;
+}
+
+// ============================================================
+// JSON Directory Generation
+// ============================================================
+void Storage::build_json_directory(File dir, JsonArray parentArray) {
+  while (true) {
+    File entry = dir.openNextFile();
+    if (!entry)
+      break;
+
+    JsonObject obj = parentArray.add<JsonObject>();
+    obj["name"] = String(entry.name());
+
+    if (entry.isDirectory()) {
+      obj["type"] = "folder";
+      JsonArray subChildren = obj["children"].to<JsonArray>();
+      build_json_directory(entry, subChildren);
+    } else {
+      obj["type"] = "file";
+      obj["size"] = entry.size();
+    }
+
+    entry.close();
+  }
+}
+
+String Storage::get_sd_json_structure() {
+  JsonDocument doc; // Use a dynamic JsonDocument for potentially large trees
+  doc["path"] = "/";
+  doc["type"] = "folder";
+  JsonArray children = doc["children"].to<JsonArray>();
+
+  File root = SD.open("/");
+  if (!root) {
+    doc["error"] = "Failed to open root";
+    String json;
+    serializeJson(doc, json);
+    return json;
+  }
+
+  build_json_directory(root, children);
+  root.close();
+
+  String json;
+  serializeJson(doc, json);
+  return json;
 }
