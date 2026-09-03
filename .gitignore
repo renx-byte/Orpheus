@@ -9,3 +9,5 @@ test/
 src/display/
 src/fonts/
 src/gui/
+
+hardware/kicad/.history/
