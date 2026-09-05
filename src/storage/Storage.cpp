@@ -198,7 +198,7 @@ void Storage::upload_start_sd(String song_name, int chunk_index) {
 
 bool Storage::ensure_directories() {
   // Create required directories if they don't exist
-  const char *dirs[] = {"/Songs", "/_Metadata", "/_CoverArt"};
+  const char *dirs[] = {"/Songs", "/_Metadata", "/_Coverart"};
   for (const char *dir : dirs) {
     if (!SD.exists(dir)) {
       if (!SD.mkdir(dir)) {
@@ -233,7 +233,7 @@ void Storage::upload_start_cover_sd(String song_name) {
   // Remove leading slash if present and construct path
   if (song_name.startsWith("/"))
     song_name.remove(0, 1);
-  String path = "/_CoverArt/" + song_name + ".png"; // client sends PNG
+  String path = "/_Coverart/" + song_name + ".png"; // client sends PNG
   currentCoverFile = SD.open(path, FILE_WRITE);
   if (!currentCoverFile) {
     Serial.print("Error: Failed to open cover file: ");

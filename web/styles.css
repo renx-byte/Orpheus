@@ -22,7 +22,6 @@
     6px 3px
   );
 
-  /* Cohesive Modern Terminal Palette */
   --bg-main: #0a0b10;
   --bg-panel: #1e1e2e;
 
@@ -78,7 +77,9 @@ body::before {
       rgba(249, 226, 175, 0.8),
       transparent
     );
+
   background-size: 800px 400px;
+
   animation: starDrift 30s linear infinite;
 }
 
@@ -109,7 +110,9 @@ body::after {
       rgba(255, 255, 255, 0.3),
       transparent
     );
+
   background-size: 600px 300px;
+
   animation: starDrift 60s linear infinite;
 }
 
@@ -117,6 +120,7 @@ body::after {
   0% {
     background-position: 0 0;
   }
+
   100% {
     background-position: -800px 0;
   }
@@ -126,6 +130,7 @@ body::after {
   0% {
     transform: translate(0, 0);
   }
+
   100% {
     transform: translate(59.4px, 59.4px);
   }
@@ -133,12 +138,17 @@ body::after {
 
 * {
   font-family: "Raw Pixel", monospace, sans-serif;
+
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+
   background-color: var(--bg-main);
+
   color: var(--text-main);
+
   background-attachment: fixed;
 }
 
@@ -151,30 +161,42 @@ h5 {
 
 .header-area {
   height: 10vh;
+
   text-align: center;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   margin-top: 20px;
 }
 
 #typewriter-heading {
   cursor: pointer;
+
   font-size: 48px;
   letter-spacing: 5px;
+
   color: var(--accent-gold);
+
   display: inline-block;
+
   border-right: 3px solid currentColor;
+
   white-space: nowrap;
+
   animation: blink 0.75s step-end infinite;
+
   transition:
     color 400ms ease,
     transform 400ms ease;
+
   margin: 0;
 }
 
 #typewriter-heading:hover {
   transform: scale(1.02);
+
   color: var(--accent-cyan);
 }
 
@@ -183,6 +205,7 @@ h5 {
   to {
     border-color: transparent;
   }
+
   50% {
     border-color: currentColor;
   }
@@ -190,39 +213,61 @@ h5 {
 
 .main-content {
   height: 85vh;
+
   display: flex;
+
   align-items: center;
 }
 
 .selection-area {
   display: flex;
+
   flex-direction: column;
+
   align-items: center;
+
   width: 30vw;
 }
 
 .result-area {
   display: flex;
+
   flex-direction: column;
+
   justify-content: center;
+
   align-items: center;
+
   width: 70vw;
 }
 
 .selection-card {
   position: relative;
+
   display: flex;
+
   justify-content: center;
+
   align-items: center;
+
   min-width: 250px;
+
   height: 60px;
+
   margin: 15px 0;
+
   color: var(--accent-cyan);
+
   background: var(--bg-panel);
+
   border: 3px solid var(--accent-blue);
+
   box-shadow: 6px 6px 0 0 var(--shadow-color);
+
   clip-path: var(--pixel-shape);
+
   cursor: pointer;
+
   transition:
     transform 300ms ease,
     background-color 300ms ease,
@@ -232,9 +277,13 @@ h5 {
 
 .selection-card:hover {
   color: var(--bg-main);
+
   background-color: var(--accent-cyan);
+
   border-color: var(--accent-cyan);
+
   transform: translate(-3px, -3px);
+
   box-shadow: 9px 9px 0 0 var(--shadow-color);
 }
 
@@ -244,17 +293,53 @@ h5 {
   text-transform: uppercase;
 }
 
+/* ============================================================
+   RESULT CONTAINER - SCROLLING
+   ============================================================ */
+
 #result-container {
   position: relative;
+
   width: 50vw;
-  min-height: 500px;
+
+  /*
+    The container has a fixed usable height.
+    When its content becomes taller than this,
+    the entire container can scroll vertically.
+  */
+  height: 500px;
+
+  max-height: calc(85vh - 30px);
+
+  min-height: 0;
+
   display: flex;
+
   flex-direction: column;
-  padding: 40px;
-  background-color: #00000062;
+
+  padding: 20px 40px 0 40px;
+
+  background-color: black;
+
   border: 3px solid #313244;
+
   box-shadow: 12px 12px 0 0 var(--shadow-color);
+
   clip-path: var(--pixel-shape);
+
+  /*
+    This is the important part.
+    The result container itself becomes scrollable.
+  */
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  /*
+    Keeps the scrollbar from changing the layout width.
+  */
+  scrollbar-gutter: stable;
+
   transition:
     border-color 400ms ease,
     transform 400ms ease;
@@ -263,41 +348,89 @@ h5 {
 #result-container:hover,
 #result-container.is-active {
   transform: scale(1.01);
+
   border-color: var(--accent-cyan);
 }
 
+/* Scrollbar */
+
+#result-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+#result-container::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+#result-container::-webkit-scrollbar-thumb {
+  background: var(--accent-blue);
+
+  border-radius: 0;
+}
+
+#result-container::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+}
+
+/* Firefox */
+
+#result-container {
+  scrollbar-width: none;
+
+  scrollbar-color: var(--accent-blue) var(--bg-main);
+}
+
+/* ============================================================
+   RESULT WRAPPER
+   ============================================================ */
+
 .result-wrapper {
   opacity: 0;
+
   transition: opacity 600ms ease;
+
   pointer-events: none;
+
   display: flex;
+
   flex-direction: column;
+
   height: 100%;
 }
 
 .result-wrapper.is-visible {
   opacity: 1;
+
   pointer-events: auto;
 }
 
 .result-heading {
   color: var(--accent-gold);
+
   margin-bottom: 30px;
+
   font-size: 24px;
 }
 
 .result-description {
   font-size: 22px;
+
   letter-spacing: 2px;
+
   line-height: 1.8;
+
   color: var(--text-main);
+
   flex-grow: 1;
 }
 
 .result-prompt {
   font-size: 28px;
+
   color: var(--accent-cyan);
+
   margin-top: 40px;
+
   animation: pulse 2s infinite;
 }
 
@@ -306,14 +439,30 @@ h5 {
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
 }
 
+/* ============================================================
+   SD DIRECTORY
+   ============================================================ */
+
 #sd-directory {
   opacity: 0;
+
   transition: opacity 600ms ease;
+
+  /*
+    Allow the directory to naturally grow.
+    The parent result-container handles scrolling.
+  */
+  display: flex;
+
+  flex-direction: column;
+
+  min-height: 100%;
 }
 
 #sd-directory.is-visible {
@@ -322,94 +471,169 @@ h5 {
 
 #sd-directory ul {
   list-style: none;
+
   padding-left: 18px;
+
   margin: 0;
 }
 
 #sd-directory li {
   position: relative;
+
   list-style-type: none;
 }
 
 #sd-directory .file::before {
   content: "└─ ";
+
   font-family: monospace;
+
   color: var(--accent-cyan);
+
   font-weight: bold;
 }
 
 .folder {
   display: inline-block;
+
   font-size: 28px;
+
   color: var(--accent-gold);
+
   margin-bottom: 15px;
 }
 
 .file {
   display: inline-block;
+
   margin-bottom: 10px;
 }
 
 .options-container {
   display: flex;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 40px;
+
+  position: sticky;
+
+  left: 0;
+
+  bottom: 0;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  gap: 10px;
+
+  padding: 15px 10px 30px 10px;
+
+  margin-top: 20px;
+
+  background-color: black;
 }
 
 .result-button {
   font-size: 18px;
+
   letter-spacing: 3px;
+
   width: 180px;
+
   height: 70px;
+
   background-color: transparent;
+
   clip-path: var(--pixel-shape);
+
   box-shadow: 6px 6px 0 0 var(--shadow-color);
+
   cursor: pointer;
+
   margin: 0 20px;
+
   transition: transform 300ms ease;
-}
-
-.size {
-  font-size: 22px;
-  color: var(--accent-cyan);
-  margin-left: 20px;
-}
-
-#add-file {
-  color: var(--soft-blue);
-  border: 3px solid var(--soft-blue);
-}
-
-#add-file:hover {
-  color: var(--bg-main);
-  background-color: var(--soft-blue);
-}
-
-#remove-file {
-  color: var(--soft-red);
-  border: 3px solid var(--soft-red);
-}
-
-#remove-file:hover {
-  color: var(--bg-main);
-  background-color: var(--soft-red);
 }
 
 .result-button:hover {
   transform: translate(-3px, -3px);
 }
 
+.size {
+  font-size: 22px;
+
+  color: var(--accent-cyan);
+
+  margin-left: 20px;
+}
+
+#add-file {
+  color: var(--soft-blue);
+
+  border: 3px solid var(--soft-blue);
+}
+
+#add-file:hover {
+  color: var(--bg-main);
+
+  background-color: var(--soft-blue);
+}
+
+#remove-file {
+  color: var(--soft-red);
+
+  border: 3px solid var(--soft-red);
+}
+
+#remove-file:hover {
+  color: var(--bg-main);
+
+  background-color: var(--soft-red);
+}
+
+#download-file {
+  color: #28a745;
+
+  border: 3px solid #28a745;
+}
+
+#download-file:hover {
+  color: var(--bg-main);
+
+  background-color: #28a745;
+}
+
+/* ============================================================
+   HIDDEN ITEMS
+   ============================================================ */
+
+#sd-directory-list li.hidden-item {
+  display: none;
+}
+
+#result-container.show-hidden #sd-directory-list li.hidden-item {
+  display: list-item;
+}
+
+/* ============================================================
+   ADD / REMOVE / DOWNLOAD MODES
+   ============================================================ */
+
 .add-item-btn {
   display: none;
+
   margin-right: 6px;
+
   cursor: pointer;
+
   background: #28a745;
+
   color: white;
+
   border: none;
+
   border-radius: 3px;
+
   font-weight: bold;
+
   padding: 0 4px;
 }
 
@@ -421,70 +645,137 @@ h5 {
   padding: 5px 10px;
 }
 
-/* === ADD MODE STYLES (Folders Only) === */
 #sd-directory.is-adding span.folder {
   cursor: pointer;
+
   border-bottom: 1px dashed var(--soft-blue);
 }
 
 #sd-directory.is-adding span.folder:hover {
   background-color: rgba(66, 116, 217, 0.2);
+
   border-radius: 3px;
 }
 
 #sd-directory.is-adding span.file,
 #sd-directory.is-adding span.size {
   cursor: default;
+
   border-bottom: none;
+
   background-color: transparent;
 }
 
 #sd-directory.is-removing span.folder,
 #sd-directory.is-removing span.file {
   cursor: pointer;
+
   border-bottom: 1px dashed var(--soft-red);
 }
 
 #sd-directory.is-removing span.folder:hover,
 #sd-directory.is-removing span.file:hover {
   background-color: rgba(208, 49, 30, 0.2);
+
   border-radius: 3px;
 }
 
+#sd-directory.is-downloading span.file {
+  cursor: pointer;
+
+  border-bottom: 1px dashed #28a745;
+}
+
+#sd-directory.is-downloading span.file:hover {
+  background-color: rgba(40, 167, 69, 0.2);
+
+  border-radius: 3px;
+}
+
+#sd-directory.is-downloading span.folder {
+  cursor: default;
+
+  border-bottom: none;
+
+  background-color: transparent;
+}
+
+/* ============================================================
+   DYNAMIC FETCH WRAPPER
+   ============================================================ */
+
+#dynamic-fetch-wrapper {
+  display: flex;
+
+  flex-direction: column;
+
+  flex: 1;
+
+  min-height: 0;
+
+  width: 100%;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
 .modal-overlay {
   position: fixed;
+
   top: 0;
   left: 0;
+
   width: 100vw;
   height: 100vh;
+
   background: rgba(10, 11, 16, 0.85);
+
   backdrop-filter: blur(4px);
+
   display: flex;
+
   justify-content: center;
   align-items: center;
+
   z-index: 1000;
+
   opacity: 0;
+
   pointer-events: none;
+
   transition: opacity 300ms ease;
 }
 
 .modal-overlay.is-visible {
   opacity: 1;
+
   pointer-events: auto;
 }
 
 .modal-container {
   background: var(--bg-panel);
+
   border: 3px solid var(--accent-cyan);
+
   clip-path: var(--pixel-shape);
+
   padding: 25px;
+
   width: 320px;
+
   box-shadow: 8px 8px 0 0 var(--shadow-color);
+
   color: var(--text-main);
+
   display: flex;
+
   flex-direction: column;
+
   gap: 20px;
+
   transition: transform 300ms ease;
+
   transform: translateY(10px);
 }
 
@@ -494,23 +785,33 @@ h5 {
 
 .modal-heading {
   color: var(--accent-gold);
+
   text-align: center;
+
   margin: 0;
+
   font-size: 20px;
 }
 
 .modal-step {
   display: flex;
+
   flex-direction: column;
+
   gap: 15px;
+
   opacity: 1;
+
   transition: opacity 300ms ease;
 }
 
 .modal-text {
   text-align: center;
+
   margin: 0;
+
   font-size: 14px;
+
   color: var(--text-main);
 }
 
@@ -520,7 +821,9 @@ h5 {
 
 .modal-btn-group {
   display: flex;
+
   justify-content: space-between;
+
   gap: 15px;
 }
 
@@ -530,77 +833,107 @@ h5 {
 
 .modal-btn {
   width: 100%;
+
   height: 45px;
+
   font-size: 16px;
+
   margin: 0;
+
   border-width: 2px;
 }
 
 .modal-btn.small {
   height: 40px;
+
   font-size: 14px;
 }
 
 .btn-sibling {
   border-color: var(--soft-blue);
+
   color: var(--soft-blue);
 }
+
 .btn-child {
   border-color: var(--accent-gold);
+
   color: var(--accent-gold);
 }
+
 .btn-type {
   border-color: var(--accent-blue);
+
   color: var(--accent-cyan);
 }
+
 .btn-type.is-active {
   background-color: var(--accent-blue);
+
   color: var(--bg-main);
 }
+
 .btn-cancel {
   border-color: var(--soft-red);
+
   color: var(--soft-red);
 }
+
 .btn-submit {
   border-color: var(--soft-blue);
+
   color: var(--soft-blue);
 }
 
 .modal-btn:hover:not(.is-active) {
   background: rgba(255, 255, 255, 0.05);
+
   transform: translate(-2px, -2px);
 }
 
 .modal-input,
 .modal-textarea {
   background: var(--bg-main);
+
   border: 2px solid var(--accent-blue);
+
   color: var(--text-main);
+
   padding: 12px;
+
   font-family: inherit;
+
   outline: none;
+
   clip-path: var(--pixel-shape);
+
   transition: border-color 200ms ease;
+
   letter-spacing: 1px;
 }
 
 .modal-input {
   font-size: 16px;
 }
+
 .modal-textarea {
   font-size: 14px;
+
   height: 100px;
+
   resize: none;
 }
 
 .modal-input.is-error {
   border-color: var(--soft-red);
+
   animation: shake 300ms;
 }
 
 .d-none {
   display: none !important;
 }
+
 .opacity-0 {
   opacity: 0 !important;
 }
@@ -610,24 +943,39 @@ h5 {
   100% {
     transform: translateX(0);
   }
+
   25% {
     transform: translateX(-5px);
   }
+
   75% {
     transform: translateX(5px);
   }
 }
 
+/* ============================================================
+   DROP ZONE
+   ============================================================ */
+
 #drop-zone {
   border: 3px dashed var(--accent-blue);
+
   font-size: 14px;
+
   letter-spacing: 3px;
+
   color: var(--accent-cyan);
+
   border-radius: 8px;
+
   padding: 40px;
+
   text-align: center;
+
   background-color: var(--bg-main);
+
   cursor: pointer;
+
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
@@ -635,15 +983,25 @@ h5 {
 
 #drop-zone.dragover {
   background-color: #e2e6ea;
+
   border-color: #0056b3;
 }
 
+/* ============================================================
+   UPLOAD PROGRESS
+   ============================================================ */
+
 #upload-progress-container {
   display: flex;
+
   flex-direction: column;
+
   justify-content: center;
+
   align-items: center;
+
   width: 100%;
+
   padding: 20px 0;
 }
 
@@ -653,50 +1011,37 @@ h5 {
 
 #upload-progress-container text {
   font-family: "Raw Pixel", monospace, sans-serif;
+
   letter-spacing: 1px;
 }
 
 .upload-filename {
   color: var(--accent-gold);
+
   font-size: 14px;
+
   letter-spacing: 1px;
+
   margin-top: 35px;
 
   text-align: center;
+
   word-break: break-all;
 }
 
-#download-file {
-  color: #28a745; /* green */
-  border: 3px solid #28a745;
-}
-
-#download-file:hover {
-  color: var(--bg-main);
-  background-color: #28a745;
-}
-
-#sd-directory.is-downloading span.file {
-  cursor: pointer;
-  border-bottom: 1px dashed #28a745;
-}
-
-#sd-directory.is-downloading span.file:hover {
-  background-color: rgba(40, 167, 69, 0.2);
-  border-radius: 3px;
-}
-
-#sd-directory.is-downloading span.folder {
-  cursor: default;
-  border-bottom: none;
-  background-color: transparent;
-}
+/* ============================================================
+   PIXEL RING
+   ============================================================ */
 
 .pixel-ring {
   fill: none;
+
   stroke: #333;
+
   stroke-width: 8px;
+
   stroke-linecap: butt;
+
   stroke-linejoin: miter;
 }
 
@@ -704,13 +1049,62 @@ h5 {
   stroke: var(--accent-cyan);
 
   stroke-dasharray: 100;
+
   stroke-dashoffset: 100;
 
   transition: stroke-dashoffset 0.3s ease;
 }
 
+/* ============================================================
+   SONG METADATA
+   ============================================================ */
+
 #song-metadata {
   display: flex;
+
   flex-direction: column;
+
   gap: 10px;
+}
+
+/* ============================================================
+   SHOW HIDDEN BUTTON
+   ============================================================ */
+
+.toggle-hidden-btn {
+  clip-path: var(--pixel-shape);
+
+  position: sticky;
+
+  top: 0;
+
+  align-self: flex-end;
+
+  z-index: 10;
+
+  background: var(--bg-main);
+
+  border: 2px solid var(--accent-cyan);
+
+  color: var(--accent-cyan);
+
+  padding: 10px;
+
+  cursor: pointer;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  transition:
+    background 0.2s,
+    color 0.2s;
+
+  flex-shrink: 0;
+}
+
+.toggle-hidden-btn:hover {
+  background: var(--accent-cyan);
+
+  color: #000;
 }

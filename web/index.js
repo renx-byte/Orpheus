@@ -427,6 +427,11 @@ function buildDirectoryDOM(node, container) {
     node.children?.forEach((child) => {
       const li = document.createElement("li");
 
+      // Check if name starts with "_" and mark as hidden item
+      if (child.name.startsWith("_")) {
+        li.classList.add("hidden-item");
+      }
+
       if (child.type === "folder") {
         const span = document.createElement("span");
         span.className = "folder";
@@ -752,5 +757,16 @@ document.body.addEventListener("click", (event) => {
     hideResult();
   }
 });
+
+// Toggle hidden items (directories starting with "_")
+const toggleHiddenBtn = document.getElementById("toggle-hidden-btn");
+if (toggleHiddenBtn) {
+  toggleHiddenBtn.addEventListener("click", () => {
+    const container = document.getElementById("result-container");
+    container.classList.toggle("show-hidden");
+    const isShowing = container.classList.contains("show-hidden");
+    toggleHiddenBtn.textContent = isShowing ? "Hide Hidden" : "Show Hidden";
+  });
+}
 
 sdDirectoryListener();
