@@ -4,191 +4,98 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orpheus</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jsmediatags@3.9.7/dist/jsmediatags.min.js"></script>
     <script src="index.js" defer></script>
   </head>
   <body>
-    <header class="header-area">
-      <a target="_blank" href="https://github.com/renx-byte"
-        ><h1 id="typewriter-heading"></h1
-      ></a>
-    </header>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen">
+      <h1 id="typewriter-heading"></h1>
+    </div>
 
-    <main class="main-content">
-      <section class="selection-area">
-        <div
-          class="selection-card"
-          data-title="SD CARD"
-          data-description="Explore the contents of Orpheus's SD card in one place. Browse through your stored music, albums, playlists, and other files, while keeping track of everything available on the device. Select songs to play them directly, navigate through folders, and manage your music library without needing to remove the SD card. This section serves as your central file browser for everything stored locally on Orpheus."
-        >
-          <h5 class="selection-text">SD Card</h5>
+    <!-- Main Menu -->
+    <div id="menu-screen" class="screen d-none">
+      <button id="btn-compendium" class="menu-button">Open Compendium</button>
+      <button id="btn-create" class="menu-button">Create Files</button>
+      <button id="btn-delete" class="menu-button">Delete Files</button>
+    </div>
+
+    <!-- Compendium Screen -->
+    <div id="compendium-screen" class="screen d-none">
+      <div id="song-grid" class="song-grid"></div>
+      <button id="btn-back-menu" class="back-button">← Menu</button>
+    </div>
+
+    <!-- Delete Screen (Directory Tree) -->
+    <div id="delete-screen" class="screen d-none">
+      <div id="delete-directory-container" class="directory-container">
+        <ul id="delete-directory-list"></ul>
+      </div>
+      <button id="btn-back-menu-delete" class="back-button">← Menu</button>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal-overlay" class="modal-overlay">
+      <div id="upload-modal" class="modal-container">
+        <h5 class="modal-heading">UPLOAD SONG</h5>
+
+        <!-- MP3 Drop Zone -->
+        <div id="drop-zone">
+          <p>Click or drag an MP3 file here</p>
+          <input type="file" id="file-input" accept="audio/mpeg" hidden />
+        </div>
+        <div id="selected-file-info" class="d-none">
+          <span id="selected-file-name"></span>
         </div>
 
-        <div
-          class="selection-card"
-          data-title="UPLOAD"
-          data-description="Upload your music directly to Orpheus and keep your library organized without needing to access the SD card manually. Add songs along with their name, cover image, artist, album, and other details, ensuring every track is properly identified and displayed on the device. This section provides a simple way to upload and manage new music while keeping your Orpheus library clean, organized, and ready to play."
-        >
-          <h5 class="selection-text">Upload</h5>
+        <!-- Song name -->
+        <label for="input-song-name">Song Name</label>
+        <input type="text" id="input-song-name" />
+
+        <!-- Artist -->
+        <label for="input-artist">Artist</label>
+        <input type="text" id="input-artist" />
+
+        <!-- Album -->
+        <label for="input-album">Album</label>
+        <input type="text" id="input-album" />
+
+        <!-- Release year (only 4‑digit year) -->
+        <label for="input-release-year">Release Year</label>
+        <input
+          type="number"
+          id="input-release-year"
+          min="1000"
+          max="9999"
+          step="1"
+          placeholder="YYYY"
+        />
+
+        <!-- Duration (readonly, auto‑filled) -->
+        <label for="input-duration">Duration</label>
+        <input type="text" id="input-duration" readonly />
+
+        <!-- Card colors -->
+        <label for="input-color-primary">Primary Color</label>
+        <input type="color" id="input-color-primary" />
+        <label for="input-color-dark">Dark Color</label>
+        <input type="color" id="input-color-dark" />
+        <label for="input-color-shadow">Shadow Color</label>
+        <input type="color" id="input-color-shadow" />
+
+        <!-- Upload progress -->
+        <div id="upload-progress-container" class="d-none">
+          <div id="progress-bar"></div>
+          <span id="progress-percent-text">0%</span>
+          <span id="upload-filename"></span>
         </div>
 
-        <div
-          class="selection-card"
-          data-title="MONITOR"
-          data-description="Monitor Orpheus from one place with real-time system information and activity logs. Keep track of important details such as battery level, storage usage, system status, connectivity, and other device information, while viewing logs to help you understand what Orpheus is doing in the background. This section serves as your central terminal for monitoring, diagnosing, and keeping an eye on the overall health of the device."
-        >
-          <h5 class="selection-text">Terminal</h5>
-        </div>
-      </section>
+        <div id="upload-error" class="d-none"></div>
 
-      <section class="result-area">
-        <div class="result-container" id="result-container">
-          <div class="result-wrapper" id="result-wrapper">
-            <h5 class="result-heading" id="result-heading"></h5>
-            <div class="description-container">
-              <p class="result-description" id="result-description"></p>
-              <h5 class="result-prompt">CLICK TO ENTER...</h5>
-            </div>
-          </div>
-
-          <!-- Static container for dynamic content (SD card, etc.) -->
-          <div id="dynamic-fetch-wrapper" class="d-none">
-            <!-- SD Directory section (hidden by default) -->
-            <div id="sd-directory" class="d-none">
-              <ul id="sd-directory-list"></ul>
-              <div class="options-container">
-                <button class="result-button" id="add-file">ADD ITEM</button>
-                <button class="result-button" id="remove-file">
-                  REMOVE ITEM
-                </button>
-                <button class="result-button" id="download-file">
-                  GET ITEM
-                </button>
-              </div>
-            </div>
-
-            <!-- Placeholder for other sections -->
-            <div id="placeholder-section" class="d-none">
-              <h2>Coming soon</h2>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Modal markup (static) -->
-    <div id="custom-modal-overlay" class="modal-overlay">
-      <div id="custom-modal" class="modal-container">
-        <h5 class="modal-heading">ADD NEW ITEM</h5>
-
-        <!-- Step 1: Placement -->
-        <div id="modal-step-1" class="modal-step">
-          <p class="modal-text">
-            Placement relative to
-            <span class="highlight-text" id="modal-target-name"></span>
-          </p>
-
-          <div class="modal-btn-group">
-            <button
-              id="btn-sibling"
-              class="result-button modal-btn btn-sibling"
-            >
-              SIBLING
-            </button>
-            <button id="btn-child" class="result-button modal-btn btn-child">
-              CHILD
-            </button>
-          </div>
-        </div>
-
-        <!-- Step 2: Details -->
-        <div id="modal-step-2" class="modal-step d-none opacity-0">
-          <div class="modal-btn-group">
-            <button
-              id="btn-folder"
-              class="result-button modal-btn small btn-type"
-            >
-              FOLDER
-            </button>
-            <button
-              id="btn-file"
-              class="result-button modal-btn small btn-type"
-            >
-              FILE
-            </button>
-            <button
-              id="btn-upload"
-              class="result-button modal-btn small btn-type"
-            >
-              UPLOAD
-            </button>
-          </div>
-
-          <input
-            id="modal-input-name"
-            class="modal-input"
-            type="text"
-            placeholder="Enter Name..."
-            autocomplete="off"
-          />
-          <textarea
-            id="modal-input-content"
-            class="modal-textarea d-none"
-            placeholder="Enter file content (optional)..."
-          ></textarea>
-
-          <div id="drop-zone" class="d-none">
-            <p>CLICK TO UPLOAD</p>
-            <input type="file" id="file-input" hidden />
-          </div>
-
-          <div id="upload-progress-container" class="d-none">
-            <svg width="120" height="120" viewBox="0 0 120 120">
-              <circle
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
-                stroke="#333"
-                stroke-width="8"
-              />
-              <circle
-                id="progress-circle"
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
-                stroke="var(--accent-cyan)"
-                stroke-width="8"
-                stroke-linecap="round"
-                stroke-dasharray="339.292"
-                stroke-dashoffset="339.292"
-                transform="rotate(-90 60 60)"
-              />
-              <text
-                x="60"
-                y="60"
-                text-anchor="middle"
-                dy="0.35em"
-                fill="var(--accent-cyan)"
-                font-size="18"
-                id="progress-percent"
-              >
-                0%
-              </text>
-            </svg>
-            <p id="upload-filename" class="upload-filename"></p>
-          </div>
-
-          <div class="modal-btn-group mt-10">
-            <button id="btn-cancel" class="result-button modal-btn btn-cancel">
-              CANCEL
-            </button>
-            <button id="btn-submit" class="result-button modal-btn btn-submit">
-              CREATE
-            </button>
-          </div>
-        </div>
+        <button id="btn-upload-song" disabled>Upload</button>
+        <button id="btn-cancel-upload">Cancel</button>
       </div>
     </div>
   </body>

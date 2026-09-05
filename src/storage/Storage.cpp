@@ -1,7 +1,46 @@
 #include "Storage.h"
+#include "pins.h"
 
 File Storage::currentFile;
+File Storage::currentImageFile;
+File Storage::audioUploadFile;
+File Storage::metadataUploadFile;
 
+// ============================================================
+// SD Card Initialization
+// ============================================================
+bool Storage::begin() {
+  SPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);
+
+  if (!SD.begin(PIN::SD_CS, SPI, 40000000)) {
+    Serial.println("SD mount failed");
+    return false;
+  }
+
+  // Ensure required directories exist
+  if (!SD.exists("/songs")) {
+    if (SD.mkdir("/songs")) {
+      Serial.println("Created /songs directory");
+    } else {
+      Serial.println("Failed to create /songs directory");
+    }
+  }
+  if (!SD.exists("/metadata")) {
+    if (SD.mkdir("/metadata")) {
+      Serial.println("Created /metadata directory");
+    } else {
+      Serial.println("Failed to create /metadata directory");
+    }
+  }
+
+  Serial.println("SD card initialized successfully.");
+  print_sd_structure();
+  return true;
+}
+
+// ============================================================
+// Directory Printing (Legacy / Debug)
+// ============================================================
 void Storage::print_sd_directory(File dir, int depth) {
   while (true) {
     File entry = dir.openNextFile();
@@ -47,6 +86,9 @@ void Storage::print_sd_structure() {
   Serial.println("----------------------------------");
 }
 
+// ============================================================
+// Legacy Payload Management (Backlog - not currently used)
+// ============================================================
 String Storage::resolve_parent_path(File dir, const char *targetFolder) {
   while (true) {
     File entry = dir.openNextFile();
@@ -175,52 +217,10 @@ void Storage::remove_payload_sd(const JsonDocument &payload) {
   }
 }
 
-void Storage::upload_start_sd(String song_name, int chunk_index) {
-  if (!song_name.startsWith("/")) {
-    song_name = "/" + song_name;
-  }
-
-  const char *mode = (chunk_index == 0) ? FILE_WRITE : FILE_APPEND;
-
-  currentFile = SD.open(song_name, mode);
-  if (!currentFile) {
-    Serial.print("Error: Failed to open file on SD for path: ");
-    Serial.println(song_name);
-  }
-}
-
-void Storage::upload_write_sd(uint8_t *buf, size_t size) {
-  if (currentFile) {
-    currentFile.write(buf, size);
-  } else {
-    Serial.println("Error: Attempted write with no file open");
-  }
-}
-
-void Storage::upload_end_sd() {
-  if (currentFile) {
-    currentFile.close();
-  }
-}
-
 File Storage::download_file_sd(const String &path) { return SD.open(path); }
 
-bool Storage::begin() {
-  SPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);
-
-  if (!SD.begin(PIN::SD_CS, SPI, 40000000)) {
-    Serial.println("SD mount failed");
-    return false;
-  }
-
-  Serial.println("SD card initialized successfully.");
-
-  print_sd_structure();
-  return true;
-}
-
 // ============================================================
-// JSON Directory Generation
+// Legacy JSON Directory Generation (Backlog)
 // ============================================================
 void Storage::build_json_directory(File dir, JsonArray parentArray) {
   while (true) {
@@ -245,7 +245,7 @@ void Storage::build_json_directory(File dir, JsonArray parentArray) {
 }
 
 String Storage::get_sd_json_structure() {
-  JsonDocument doc; // Use a dynamic JsonDocument for potentially large trees
+  JsonDocument doc;
   doc["path"] = "/";
   doc["type"] = "folder";
   JsonArray children = doc["children"].to<JsonArray>();
@@ -264,4 +264,248 @@ String Storage::get_sd_json_structure() {
   String json;
   serializeJson(doc, json);
   return json;
+}
+
+// ============================================================
+// Legacy chunked upload functions (kept for backward compatibility)
+// ============================================================
+void Storage::upload_start_sd(String song_name, int chunk_index) {
+  if (!song_name.startsWith("/")) {
+    song_name = "/" + song_name;
+  }
+
+  const char *mode = (chunk_index == 0) ? FILE_WRITE : FILE_APPEND;
+  currentFile = SD.open(song_name, mode);
+  if (!currentFile) {
+    Serial.print("Error: Failed to open file on SD for path: ");
+    Serial.println(song_name);
+  }
+}
+
+void Storage::upload_write_sd(uint8_t *buf, size_t size) {
+  if (currentFile) {
+    currentFile.write(buf, size);
+  } else {
+    Serial.println("Error: Attempted write with no file open");
+  }
+}
+
+void Storage::upload_end_sd() {
+  if (currentFile) {
+    currentFile.close();
+  }
+}
+
+bool Storage::upload_image_start_sd(String image_name, int chunk_index) {
+  if (!image_name.startsWith("/")) {
+    image_name = "/" + image_name;
+  }
+
+  const char *mode = (chunk_index == 0) ? FILE_WRITE : FILE_APPEND;
+  currentImageFile = SD.open(image_name, mode);
+  if (!currentImageFile) {
+    Serial.print("Error: Failed to open image file on SD for path: ");
+    Serial.println(image_name);
+    return false;
+  }
+  return true;
+}
+
+void Storage::upload_image_write_sd(uint8_t *buf, size_t size) {
+  if (currentImageFile) {
+    currentImageFile.write(buf, size);
+  } else {
+    Serial.println("Error: Attempted image write with no file open");
+  }
+}
+
+void Storage::upload_image_end_sd() {
+  if (currentImageFile) {
+    currentImageFile.close();
+  }
+}
+
+// ============================================================
+// NEW: Streaming upload for audio (MP3) into /songs/
+// ============================================================
+void Storage::start_audio_upload(const char *fullPath) {
+  audioUploadFile = SD.open(fullPath, FILE_WRITE);
+  if (!audioUploadFile) {
+    Serial.printf("Error: Failed to open audio file for writing: %s\n",
+                  fullPath);
+  }
+}
+
+void Storage::write_audio_chunk(const uint8_t *data, size_t len) {
+  if (audioUploadFile) {
+    audioUploadFile.write(data, len);
+  } else {
+    Serial.println("Error: Attempted audio write with no file open");
+  }
+}
+
+void Storage::end_audio_upload() {
+  if (audioUploadFile) {
+    audioUploadFile.close();
+  }
+}
+
+// ============================================================
+// NEW: Streaming upload for metadata JSON into /metadata/
+// ============================================================
+void Storage::start_metadata_upload(const char *fullPath) {
+  metadataUploadFile = SD.open(fullPath, FILE_WRITE);
+  if (!metadataUploadFile) {
+    Serial.printf("Error: Failed to open metadata file for writing: %s\n",
+                  fullPath);
+  }
+}
+
+void Storage::write_metadata_chunk(const uint8_t *data, size_t len) {
+  if (metadataUploadFile) {
+    metadataUploadFile.write(data, len);
+  } else {
+    Serial.println("Error: Attempted metadata write with no file open");
+  }
+}
+
+void Storage::end_metadata_upload() {
+  if (metadataUploadFile) {
+    metadataUploadFile.close();
+  }
+}
+
+// ============================================================
+// Metadata Saving (legacy JSON body method – kept for old clients)
+// ============================================================
+bool Storage::save_metadata_sd(const JsonDocument &payload) {
+  const char *filePath = payload["file_path"] | "";
+  const char *songName = payload["song_name"] | "";
+  const char *artist = payload["artist"] | "";
+  const char *album = payload["album"] | "";
+  const char *releaseDate = payload["release_date"] | "";
+  const char *duration = payload["duration"] | "";
+  const char *colorPrimary = payload["color_primary"] | "#c1afa0";
+  const char *colorDark = payload["color_dark"] | "#6c584c";
+  const char *colorShadow = payload["color_shadow"] | "#3f352f";
+  const char *imageFile = payload["image_file"] | "";
+
+  if (strlen(filePath) == 0) {
+    Serial.println("Error: file_path missing in metadata");
+    return false;
+  }
+
+  // Save next to MP3 as .json (legacy behavior)
+  String jsonPath = String(filePath) + ".json";
+
+  File metaFile = SD.open(jsonPath.c_str(), FILE_WRITE);
+  if (!metaFile) {
+    Serial.print("Error: cannot open metadata file for writing: ");
+    Serial.println(jsonPath);
+    return false;
+  }
+
+  JsonDocument metaDoc;
+  metaDoc["song_name"] = songName;
+  metaDoc["artist"] = artist;
+  metaDoc["album"] = album;
+  metaDoc["release_date"] = releaseDate;
+  metaDoc["duration"] = duration;
+  metaDoc["color_primary"] = colorPrimary;
+  metaDoc["color_dark"] = colorDark;
+  metaDoc["color_shadow"] = colorShadow;
+  metaDoc["image_file"] = imageFile;
+
+  String json;
+  serializeJson(metaDoc, json);
+  metaFile.print(json);
+  metaFile.close();
+
+  Serial.print("Metadata saved to: ");
+  Serial.println(jsonPath);
+  return true;
+}
+
+// ============================================================
+// Songs Listing (returns JSON array of all songs from /metadata/)
+// ============================================================
+String Storage::get_songs_json() {
+  JsonDocument root;
+  JsonArray songs = root.to<JsonArray>();
+
+  File dir = SD.open("/metadata");
+  if (!dir) {
+    return "[]";
+  }
+
+  while (true) {
+    File entry = dir.openNextFile();
+    if (!entry)
+      break;
+
+    if (!entry.isDirectory() && String(entry.name()).endsWith(".json")) {
+      File metaFile = SD.open(entry.path());
+      if (metaFile) {
+        JsonDocument meta;
+        DeserializationError err = deserializeJson(meta, metaFile);
+        metaFile.close();
+
+        if (!err) {
+          // Ensure file_path is present (derive from filename if missing)
+          if (!meta.containsKey("file_path")) {
+            String base = String(entry.name());
+            base.remove(base.length() - 5); // remove ".json"
+            meta["file_path"] = "/songs/" + base + ".mp3";
+          }
+          songs.add(meta);
+        } else {
+          Serial.printf("Failed to parse metadata JSON: %s\n", entry.name());
+        }
+      }
+    }
+
+    entry.close();
+  }
+  dir.close();
+
+  String json;
+  serializeJson(root, json);
+  return json;
+}
+
+// ============================================================
+// Delete Song (removes MP3 and corresponding metadata JSON)
+// ============================================================
+bool Storage::delete_song(const String &filePath) {
+  // filePath is expected to be like "/songs/My_Song.mp3"
+  String baseName;
+  if (filePath.startsWith("/songs/")) {
+    baseName = filePath.substring(7); // remove "/songs/"
+  } else {
+    baseName = filePath;
+  }
+  // Remove extension
+  int dotIndex = baseName.lastIndexOf('.');
+  if (dotIndex > 0) {
+    baseName.remove(dotIndex);
+  }
+
+  String mp3Path = "/songs/" + baseName + ".mp3";
+  String jsonPath = "/metadata/" + baseName + ".json";
+
+  bool success = true;
+  if (SD.exists(mp3Path)) {
+    if (!SD.remove(mp3Path)) {
+      Serial.printf("Failed to delete MP3: %s\n", mp3Path.c_str());
+      success = false;
+    }
+  }
+  if (SD.exists(jsonPath)) {
+    if (!SD.remove(jsonPath)) {
+      Serial.printf("Failed to delete metadata JSON: %s\n", jsonPath.c_str());
+      success = false;
+    }
+  }
+
+  return success;
 }

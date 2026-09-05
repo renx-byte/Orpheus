@@ -10,6 +10,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orpheus</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <style>
 :root {
   --pixel-shape: polygon(
@@ -35,21 +36,28 @@ const char index_html[] PROGMEM = R"rawliteral(
     6px 3px
   );
 
-  /* Cohesive Modern Terminal Palette */
   --bg-main: #0a0b10;
   --bg-panel: #1e1e2e;
-
   --text-main: #cdd6f4;
-
   --soft-red: #d0311e;
   --soft-blue: #4274d9;
-
   --accent-yellow: #ffb900;
   --accent-gold: #f9e2af;
   --accent-cyan: #89dceb;
   --accent-blue: #89b4fa;
-
   --shadow-color: #11111b;
+}
+
+* {
+  font-family: "Raw Pixel", monospace, sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  background-attachment: fixed;
 }
 
 body::before,
@@ -135,44 +143,25 @@ body::after {
   }
 }
 
-@keyframes slideLines {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(59.4px, 59.4px);
-  }
-}
-
-* {
-  font-family: "Raw Pixel", monospace, sans-serif;
-}
-
-body {
-  margin: 0;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  background-attachment: fixed;
-}
-
-h5 {
-  font-size: 18px;
-  letter-spacing: 2px;
-  text-align: center;
-  margin: 0;
-}
-
-.header-area {
-  height: 10vh;
-  text-align: center;
+.screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  margin-top: 20px;
+  align-items: center;
+  z-index: 10;
+}
+
+#splash-screen {
+  background-color: var(--bg-main);
 }
 
 #typewriter-heading {
-  cursor: pointer;
+  cursor: default;
   font-size: 48px;
   letter-spacing: 5px;
   color: var(--accent-gold);
@@ -180,15 +169,7 @@ h5 {
   border-right: 3px solid currentColor;
   white-space: nowrap;
   animation: blink 0.75s step-end infinite;
-  transition:
-    color 400ms ease,
-    transform 400ms ease;
   margin: 0;
-}
-
-#typewriter-heading:hover {
-  transform: scale(1.02);
-  color: var(--accent-cyan);
 }
 
 @keyframes blink {
@@ -201,265 +182,273 @@ h5 {
   }
 }
 
-.main-content {
-  height: 85vh;
-  display: flex;
-  align-items: center;
-}
-
-.selection-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 30vw;
-}
-
-.result-area {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 70vw;
-}
-
-.selection-card {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-width: 250px;
-  height: 60px;
+.menu-button {
+  font-size: 24px;
+  letter-spacing: 3px;
+  width: 300px;
+  height: 70px;
   margin: 15px 0;
-  color: var(--accent-cyan);
-  background: var(--bg-panel);
+  background-color: transparent;
   border: 3px solid var(--accent-blue);
-  box-shadow: 6px 6px 0 0 var(--shadow-color);
+  color: var(--accent-cyan);
   clip-path: var(--pixel-shape);
+  box-shadow: 6px 6px 0 0 var(--shadow-color);
   cursor: pointer;
   transition:
     transform 300ms ease,
-    background-color 300ms ease,
-    color 300ms ease,
-    border-color 300ms ease;
+    background-color 300ms ease;
 }
 
-.selection-card:hover {
-  color: var(--bg-main);
-  background-color: var(--accent-cyan);
-  border-color: var(--accent-cyan);
+.menu-button:hover {
   transform: translate(-3px, -3px);
-  box-shadow: 9px 9px 0 0 var(--shadow-color);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-.selection-text {
-  font-size: 22px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-#result-container {
-  position: relative;
-  width: 50vw;
-  min-height: 500px;
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
-  background-color: #00000062;
-  border: 3px solid #313244;
-  box-shadow: 12px 12px 0 0 var(--shadow-color);
-  clip-path: var(--pixel-shape);
-  transition:
-    border-color 400ms ease,
-    transform 400ms ease;
-}
-
-#result-container:hover,
-#result-container.is-active {
-  transform: scale(1.01);
-  border-color: var(--accent-cyan);
-}
-
-.result-wrapper {
-  opacity: 0;
-  transition: opacity 600ms ease;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.result-wrapper.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.result-heading {
-  color: var(--accent-gold);
-  margin-bottom: 30px;
-  font-size: 24px;
-}
-
-.result-description {
-  font-size: 22px;
-  letter-spacing: 2px;
-  line-height: 1.8;
-  color: var(--text-main);
-  flex-grow: 1;
-}
-
-.result-prompt {
-  font-size: 28px;
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 18px;
+  background: transparent;
+  border: none;
   color: var(--accent-cyan);
-  margin-top: 40px;
-  animation: pulse 2s infinite;
+  cursor: pointer;
+  letter-spacing: 2px;
+  z-index: 15;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+.back-button:hover {
+  color: var(--accent-gold);
 }
 
-#sd-directory {
-  opacity: 0;
-  transition: opacity 600ms ease;
+#compendium-screen {
+  overflow-y: auto;
+  padding: 80px 40px 40px;
 }
 
-#sd-directory.is-visible {
-  opacity: 1;
+.song-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  justify-items: center;
+  align-items: start;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-#sd-directory ul {
+.song-card-wrapper {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.song-card-wrapper:hover {
+  transform: translate(-1px, -10px);
+}
+
+.song-card {
+  cursor: pointer;
+  position: relative;
+  width: 250px;
+  height: 300px;
+  padding: 30px 24px 24px;
+  border: 3px solid var(--song-shadow, #3f352f);
+  clip-path: var(--pixel-shape);
+  background: linear-gradient(
+    145deg,
+    var(--song-primary, #c1afa0) 0%,
+    var(--song-primary, #c1afa0) 58%,
+    var(--song-dark, #6c584c) 100%
+  );
+  color: white;
+  box-shadow: 10px 10px 0 var(--song-shadow, #3f352f);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.song-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.12),
+    transparent 30%
+  );
+  pointer-events: none;
+}
+
+.song-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 55%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+  pointer-events: none;
+}
+
+.album-art {
+  align-self: center;
+  width: 85px;
+  height: 85px;
+  margin-top: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6);
+  position: relative;
+  z-index: 1;
+}
+
+.album-art img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transform: scale(1.8);
+}
+
+.song-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.song-title h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+  letter-spacing: 2px;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.65);
+}
+
+.song-details {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 2px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  opacity: 0.6;
+}
+
+.value {
+  text-align: right;
+  max-width: 65%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.play-button {
+  position: absolute;
+  right: -18px;
+  bottom: -18px;
+  width: 55px;
+  height: 55px;
+  border: 3px solid var(--song-shadow, #3f352f);
+  background: white;
+  color: var(--song-shadow, #3f352f);
+  font-family: inherit;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 5px 5px 0 var(--song-shadow, #3f352f);
+  z-index: 10;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.play-button:hover {
+  transform: scale(1.1);
+  box-shadow: 3px 3px 0 var(--song-shadow, #3f352f);
+}
+
+#delete-screen {
+  overflow-y: auto;
+  padding: 80px 40px 40px;
+}
+
+.directory-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.3);
+  border: 3px solid #313244;
+  clip-path: var(--pixel-shape);
+  padding: 20px;
+  box-shadow: 12px 12px 0 0 var(--shadow-color);
+}
+
+#delete-directory-list {
   list-style: none;
   padding-left: 18px;
   margin: 0;
 }
 
-#sd-directory li {
-  position: relative;
-  list-style-type: none;
+#delete-directory-list ul {
+  list-style: none;
+  padding-left: 18px;
+  margin: 0;
 }
 
-#sd-directory .file::before {
+#delete-directory-list li {
+  position: relative;
+  list-style-type: none;
+  padding: 5px 0;
+}
+
+#delete-directory-list .file::before {
   content: "└─ ";
   font-family: monospace;
   color: var(--accent-cyan);
   font-weight: bold;
 }
 
-.folder {
+#delete-directory-list .folder {
   display: inline-block;
-  font-size: 28px;
+  font-size: 20px;
   color: var(--accent-gold);
-  margin-bottom: 15px;
-}
-
-.file {
-  display: inline-block;
-  margin-bottom: 10px;
-}
-
-.options-container {
-  display: flex;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 40px;
-}
-
-.result-button {
-  font-size: 18px;
-  letter-spacing: 3px;
-  width: 180px;
-  height: 70px;
-  background-color: transparent;
-  clip-path: var(--pixel-shape);
-  box-shadow: 6px 6px 0 0 var(--shadow-color);
   cursor: pointer;
-  margin: 0 20px;
-  transition: transform 300ms ease;
 }
 
-.size {
-  font-size: 22px;
+#delete-directory-list .file {
+  display: inline-block;
+  cursor: pointer;
+}
+
+#delete-directory-list .size {
+  font-size: 16px;
   color: var(--accent-cyan);
   margin-left: 20px;
 }
 
-#add-file {
-  color: var(--soft-blue);
-  border: 3px solid var(--soft-blue);
-}
-
-#add-file:hover {
-  color: var(--bg-main);
-  background-color: var(--soft-blue);
-}
-
-#remove-file {
-  color: var(--soft-red);
-  border: 3px solid var(--soft-red);
-}
-
-#remove-file:hover {
-  color: var(--bg-main);
-  background-color: var(--soft-red);
-}
-
-.result-button:hover {
-  transform: translate(-3px, -3px);
-}
-
-.add-item-btn {
-  display: none;
-  margin-right: 6px;
-  cursor: pointer;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  font-weight: bold;
-  padding: 0 4px;
-}
-
-#sd-directory.is-adding .add-item-btn {
-  display: inline-block;
-}
-
-.add-item-btn {
-  padding: 5px 10px;
-}
-
-/* === ADD MODE STYLES (Folders Only) === */
-#sd-directory.is-adding span.folder {
-  cursor: pointer;
-  border-bottom: 1px dashed var(--soft-blue);
-}
-
-#sd-directory.is-adding span.folder:hover {
-  background-color: rgba(66, 116, 217, 0.2);
-  border-radius: 3px;
-}
-
-#sd-directory.is-adding span.file,
-#sd-directory.is-adding span.size {
-  cursor: default;
-  border-bottom: none;
-  background-color: transparent;
-}
-
-#sd-directory.is-removing span.folder,
-#sd-directory.is-removing span.file {
-  cursor: pointer;
-  border-bottom: 1px dashed var(--soft-red);
-}
-
-#sd-directory.is-removing span.folder:hover,
-#sd-directory.is-removing span.file:hover {
+#delete-directory-list .folder:hover,
+#delete-directory-list .file:hover {
   background-color: rgba(208, 49, 30, 0.2);
   border-radius: 3px;
 }
@@ -490,8 +479,10 @@ h5 {
   background: var(--bg-panel);
   border: 3px solid var(--accent-cyan);
   clip-path: var(--pixel-shape);
-  padding: 25px;
-  width: 320px;
+  padding: 30px;
+  width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 8px 8px 0 0 var(--shadow-color);
   color: var(--text-main);
   display: flex;
@@ -509,83 +500,17 @@ h5 {
   color: var(--accent-gold);
   text-align: center;
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
+  letter-spacing: 2px;
 }
 
-.modal-step {
+.metadata-fields {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  opacity: 1;
-  transition: opacity 300ms ease;
+  gap: 12px;
 }
 
-.modal-text {
-  text-align: center;
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-main);
-}
-
-.highlight-text {
-  color: var(--accent-cyan);
-}
-
-.modal-btn-group {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-}
-
-.modal-btn-group.mt-10 {
-  margin-top: 10px;
-}
-
-.modal-btn {
-  width: 100%;
-  height: 45px;
-  font-size: 16px;
-  margin: 0;
-  border-width: 2px;
-}
-
-.modal-btn.small {
-  height: 40px;
-  font-size: 14px;
-}
-
-.btn-sibling {
-  border-color: var(--soft-blue);
-  color: var(--soft-blue);
-}
-.btn-child {
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
-}
-.btn-type {
-  border-color: var(--accent-blue);
-  color: var(--accent-cyan);
-}
-.btn-type.is-active {
-  background-color: var(--accent-blue);
-  color: var(--bg-main);
-}
-.btn-cancel {
-  border-color: var(--soft-red);
-  color: var(--soft-red);
-}
-.btn-submit {
-  border-color: var(--soft-blue);
-  color: var(--soft-blue);
-}
-
-.modal-btn:hover:not(.is-active) {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translate(-2px, -2px);
-}
-
-.modal-input,
-.modal-textarea {
+.modal-input {
   background: var(--bg-main);
   border: 2px solid var(--accent-blue);
   color: var(--text-main);
@@ -595,40 +520,54 @@ h5 {
   clip-path: var(--pixel-shape);
   transition: border-color 200ms ease;
   letter-spacing: 1px;
-}
-
-.modal-input {
   font-size: 16px;
 }
-.modal-textarea {
+
+.modal-input:focus {
+  border-color: var(--accent-cyan);
+}
+
+.color-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 5px 0;
+}
+
+.color-inputs label {
   font-size: 14px;
-  height: 100px;
-  resize: none;
+  letter-spacing: 1px;
+  color: var(--text-main);
 }
 
-.modal-input.is-error {
-  border-color: var(--soft-red);
-  animation: shake 300ms;
+.color-inputs input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--accent-blue);
+  background: none;
+  cursor: pointer;
+  padding: 0;
 }
 
-.d-none {
-  display: none !important;
-}
-.opacity-0 {
-  opacity: 0 !important;
+.album-art-upload {
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-5px);
-  }
-  75% {
-    transform: translateX(5px);
-  }
+.album-art-upload label {
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: var(--accent-cyan);
+}
+
+.album-art-upload input[type="file"] {
+  background: var(--bg-main);
+  border: 2px solid var(--accent-blue);
+  color: var(--text-main);
+  padding: 8px;
+  font-family: inherit;
 }
 
 #drop-zone {
@@ -646,9 +585,14 @@ h5 {
     border-color 0.2s ease;
 }
 
-#drop-zone.dragover {
-  background-color: #e2e6ea;
-  border-color: #0056b3;
+#drop-zone:hover {
+  background-color: rgba(137, 220, 235, 0.05);
+}
+
+#selected-file-info {
+  margin: 10px 0;
+  font-size: 14px;
+  color: var(--accent-cyan);
 }
 
 #upload-progress-container {
@@ -660,553 +604,653 @@ h5 {
   padding: 20px 0;
 }
 
-#upload-progress-container svg circle {
-  transition: stroke-dashoffset 0.3s ease;
+.progress-bar-container {
+  width: 100%;
+  height: 20px;
+  background-color: var(--bg-main);
+  border: 2px solid var(--accent-blue);
+  clip-path: var(--pixel-shape);
+  overflow: hidden;
 }
 
-#upload-progress-container text {
-  font-family: "Raw Pixel", monospace, sans-serif;
-  letter-spacing: 1px;
+.progress-bar {
+  height: 100%;
+  background-color: var(--accent-cyan);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+#progress-percent-text {
+  text-align: center;
+  margin: 10px 0 0;
+  font-size: 18px;
+  color: var(--accent-gold);
 }
 
 .upload-filename {
   color: var(--accent-gold);
   font-size: 14px;
   letter-spacing: 1px;
-  margin-top: 35px;
-
+  margin-top: 10px;
   text-align: center;
   word-break: break-all;
 }
 
-#download-file {
-  color: #28a745; /* green */
-  border: 3px solid #28a745;
+.error-message {
+  color: var(--soft-red);
+  border: 2px solid var(--soft-red);
+  padding: 10px;
+  font-size: 14px;
+  background: rgba(208, 49, 30, 0.1);
+  clip-path: var(--pixel-shape);
 }
 
-#download-file:hover {
-  color: var(--bg-main);
-  background-color: #28a745;
-}
-
-#sd-directory.is-downloading span.file {
-  cursor: pointer;
-  border-bottom: 1px dashed #28a745;
-}
-
-#sd-directory.is-downloading span.file:hover {
-  background-color: rgba(40, 167, 69, 0.2);
-  border-radius: 3px;
-}
-
-#sd-directory.is-downloading span.folder {
-  cursor: default;
-  border-bottom: none;
+.modal-btn {
+  font-size: 18px;
+  letter-spacing: 3px;
+  width: 100%;
+  height: 50px;
   background-color: transparent;
+  clip-path: var(--pixel-shape);
+  box-shadow: 6px 6px 0 0 var(--shadow-color);
+  cursor: pointer;
+  transition: transform 300ms ease;
+  margin: 5px 0;
 }
 
-.pixel-ring {
-  fill: none;
-  stroke: #333;
-  stroke-width: 8px;
-  stroke-linecap: butt;
-  stroke-linejoin: miter;
+.modal-btn:hover {
+  transform: translate(-3px, -3px);
 }
 
-.pixel-ring.progress {
-  stroke: var(--accent-cyan);
+.btn-cancel {
+  color: var(--soft-red);
+  border: 3px solid var(--soft-red);
+}
 
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
+.btn-cancel:hover {
+  background-color: rgba(208, 49, 30, 0.1);
+}
 
-  transition: stroke-dashoffset 0.3s ease;
+.btn-submit {
+  color: var(--soft-blue);
+  border: 3px solid var(--soft-blue);
+}
+
+.btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.d-none {
+  display: none !important;
+}
+
+@media (max-width: 1200px) {
+  .song-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .song-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .song-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 </style>
     
+    
   </head>
   <body>
-    <header class="header-area">
-      <a target="_blank" href="https://github.com/renx-byte"
-        ><h1 id="typewriter-heading"></h1
-      ></a>
-    </header>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen">
+      <h1 id="typewriter-heading"></h1>
+    </div>
 
-    <main class="main-content">
-      <section class="selection-area">
-        <div
-          class="selection-card"
-          data-title="SD CARD"
-          data-description="Explore the contents of Orpheus's SD card in one place. Browse through your stored music, albums, playlists, and other files, while keeping track of everything available on the device. Select songs to play them directly, navigate through folders, and manage your music library without needing to remove the SD card. This section serves as your central file browser for everything stored locally on Orpheus."
-        >
-          <h5 class="selection-text">SD Card</h5>
+    <!-- Main Menu -->
+    <div id="menu-screen" class="screen d-none">
+      <button id="btn-compendium" class="menu-button">Open Compendium</button>
+      <button id="btn-create" class="menu-button">Create Files</button>
+      <button id="btn-delete" class="menu-button">Delete Files</button>
+    </div>
+
+    <!-- Compendium Screen -->
+    <div id="compendium-screen" class="screen d-none">
+      <div id="song-grid" class="song-grid"></div>
+      <button id="btn-back-menu" class="back-button">← Menu</button>
+    </div>
+
+    <!-- Delete Screen (Directory Tree) -->
+    <div id="delete-screen" class="screen d-none">
+      <div id="delete-directory-container" class="directory-container">
+        <ul id="delete-directory-list"></ul>
+      </div>
+      <button id="btn-back-menu-delete" class="back-button">← Menu</button>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal-overlay" class="modal-overlay">
+      <div id="upload-modal" class="modal-container">
+        <h5 class="modal-heading">UPLOAD SONG</h5>
+
+        <!-- MP3 Drop Zone -->
+        <div id="drop-zone">
+          <p>Click or drag an MP3 file here</p>
+          <input type="file" id="file-input" accept="audio/mpeg" hidden />
+        </div>
+        <div id="selected-file-info" class="d-none">
+          <span id="selected-file-name"></span>
         </div>
 
-        <div
-          class="selection-card"
-          data-title="UPLOAD"
-          data-description="Upload your music directly to Orpheus and keep your library organized without needing to access the SD card manually. Add songs along with their name, cover image, artist, album, and other details, ensuring every track is properly identified and displayed on the device. This section provides a simple way to upload and manage new music while keeping your Orpheus library clean, organized, and ready to play."
-        >
-          <h5 class="selection-text">Upload</h5>
+        <!-- Song name -->
+        <label for="input-song-name">Song Name</label>
+        <input type="text" id="input-song-name" />
+
+        <!-- Artist -->
+        <label for="input-artist">Artist</label>
+        <input type="text" id="input-artist" />
+
+        <!-- Album -->
+        <label for="input-album">Album</label>
+        <input type="text" id="input-album" />
+
+        <!-- Release year (only 4‑digit year) -->
+        <label for="input-release-year">Release Year</label>
+        <input
+          type="number"
+          id="input-release-year"
+          min="1000"
+          max="9999"
+          step="1"
+          placeholder="YYYY"
+        />
+
+        <!-- Duration (readonly, auto‑filled) -->
+        <label for="input-duration">Duration</label>
+        <input type="text" id="input-duration" readonly />
+
+        <!-- Card colors -->
+        <label for="input-color-primary">Primary Color</label>
+        <input type="color" id="input-color-primary" />
+        <label for="input-color-dark">Dark Color</label>
+        <input type="color" id="input-color-dark" />
+        <label for="input-color-shadow">Shadow Color</label>
+        <input type="color" id="input-color-shadow" />
+
+        <!-- Upload progress -->
+        <div id="upload-progress-container" class="d-none">
+          <div id="progress-bar"></div>
+          <span id="progress-percent-text">0%</span>
+          <span id="upload-filename"></span>
         </div>
 
-        <div
-          class="selection-card"
-          data-title="MONITOR"
-          data-description="Monitor Orpheus from one place with real-time system information and activity logs. Keep track of important details such as battery level, storage usage, system status, connectivity, and other device information, while viewing logs to help you understand what Orpheus is doing in the background. This section serves as your central terminal for monitoring, diagnosing, and keeping an eye on the overall health of the device."
-        >
-          <h5 class="selection-text">Terminal</h5>
-        </div>
-      </section>
+        <div id="upload-error" class="d-none"></div>
 
-      <section class="result-area">
-        <div class="result-container" id="result-container">
-          <div class="result-wrapper" id="result-wrapper">
-            <h5 class="result-heading" id="result-heading"></h5>
-            <div class="description-container">
-              <p class="result-description" id="result-description"></p>
-              <h5 class="result-prompt">CLICK TO ENTER...</h5>
-            </div>
-          </div>
-
-          <!-- Static container for dynamic content (SD card, etc.) -->
-          <div id="dynamic-fetch-wrapper" class="d-none">
-            <!-- SD Directory section (hidden by default) -->
-            <div id="sd-directory" class="d-none">
-              <ul id="sd-directory-list"></ul>
-              <div class="options-container">
-                <button class="result-button" id="add-file">ADD ITEM</button>
-                <button class="result-button" id="remove-file">
-                  REMOVE ITEM
-                </button>
-                <button class="result-button" id="download-file">
-                  GET ITEM
-                </button>
-              </div>
-            </div>
-
-            <!-- Placeholder for other sections -->
-            <div id="placeholder-section" class="d-none">
-              <h2>Coming soon</h2>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Modal markup (static) -->
-    <div id="custom-modal-overlay" class="modal-overlay">
-      <div id="custom-modal" class="modal-container">
-        <h5 class="modal-heading">ADD NEW ITEM</h5>
-
-        <!-- Step 1: Placement -->
-        <div id="modal-step-1" class="modal-step">
-          <p class="modal-text">
-            Placement relative to
-            <span class="highlight-text" id="modal-target-name"></span>
-          </p>
-
-          <div class="modal-btn-group">
-            <button
-              id="btn-sibling"
-              class="result-button modal-btn btn-sibling"
-            >
-              SIBLING
-            </button>
-            <button id="btn-child" class="result-button modal-btn btn-child">
-              CHILD
-            </button>
-          </div>
-        </div>
-
-        <!-- Step 2: Details -->
-        <div id="modal-step-2" class="modal-step d-none opacity-0">
-          <div class="modal-btn-group">
-            <button
-              id="btn-folder"
-              class="result-button modal-btn small btn-type"
-            >
-              FOLDER
-            </button>
-            <button
-              id="btn-file"
-              class="result-button modal-btn small btn-type"
-            >
-              FILE
-            </button>
-            <button
-              id="btn-upload"
-              class="result-button modal-btn small btn-type"
-            >
-              UPLOAD
-            </button>
-          </div>
-
-          <input
-            id="modal-input-name"
-            class="modal-input"
-            type="text"
-            placeholder="Enter Name..."
-            autocomplete="off"
-          />
-          <textarea
-            id="modal-input-content"
-            class="modal-textarea d-none"
-            placeholder="Enter file content (optional)..."
-          ></textarea>
-
-          <div id="drop-zone" class="d-none">
-            <p>CLICK TO UPLOAD</p>
-            <input type="file" id="file-input" hidden />
-          </div>
-
-          <div id="upload-progress-container" class="d-none">
-            <svg width="120" height="120" viewBox="0 0 120 120">
-              <circle
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
-                stroke="#333"
-                stroke-width="8"
-              />
-              <circle
-                id="progress-circle"
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
-                stroke="var(--accent-cyan)"
-                stroke-width="8"
-                stroke-linecap="round"
-                stroke-dasharray="339.292"
-                stroke-dashoffset="339.292"
-                transform="rotate(-90 60 60)"
-              />
-              <text
-                x="60"
-                y="60"
-                text-anchor="middle"
-                dy="0.35em"
-                fill="var(--accent-cyan)"
-                font-size="18"
-                id="progress-percent"
-              >
-                0%
-              </text>
-            </svg>
-            <p id="upload-filename" class="upload-filename"></p>
-          </div>
-
-          <div class="modal-btn-group mt-10">
-            <button id="btn-cancel" class="result-button modal-btn btn-cancel">
-              CANCEL
-            </button>
-            <button id="btn-submit" class="result-button modal-btn btn-submit">
-              CREATE
-            </button>
-          </div>
-        </div>
+        <button id="btn-upload-song" disabled>Upload</button>
+        <button id="btn-cancel-upload">Cancel</button>
       </div>
     </div>
   <script>
 // ============================================================
-// Typewriter Effect
+// Typewriter Effect for Splash
 // ============================================================
-const initTypewriter = () => {
+const initSplashTypewriter = () => {
   const heading = document.getElementById("typewriter-heading");
-  const phrases = ["renx-byte...", "Test ENV..."];
-
-  let phraseIndex = 0;
+  const text = "Initializing SD Card...";
   let charIndex = 0;
-  let isDeleting = false;
-
-  const typeSpeed = 200;
-  const eraseSpeed = 200;
-  const pauseDelay = 1500;
 
   function typeLoop() {
-    const currentText = phrases[phraseIndex];
-
-    if (!isDeleting && charIndex <= currentText.length) {
-      heading.textContent = currentText.substring(0, charIndex) || "\u00A0";
+    if (charIndex <= text.length) {
+      heading.textContent = text.substring(0, charIndex) || "\u00A0";
       charIndex++;
-      setTimeout(typeLoop, typeSpeed);
-    } else if (!isDeleting && charIndex > currentText.length) {
-      isDeleting = true;
-      setTimeout(typeLoop, pauseDelay);
-    } else if (isDeleting && charIndex >= 0) {
-      heading.textContent = currentText.substring(0, charIndex) || "\u00A0";
-      charIndex--;
-      setTimeout(typeLoop, eraseSpeed);
+      setTimeout(typeLoop, 80);
     } else {
-      isDeleting = false;
-      charIndex = 0;
-      phraseIndex = (phraseIndex + 1) % phrases.length;
-      setTimeout(typeLoop, 500);
+      setTimeout(showMenu, 3000);
     }
   }
-
   typeLoop();
 };
 
-initTypewriter();
-
-// ============================================================
-// Result Container (Hover / Click)
-// ============================================================
-const resultContainer = document.getElementById("result-container");
-const resultWrapper = document.getElementById("result-wrapper");
-const resultHeading = document.getElementById("result-heading");
-const resultDescription = document.getElementById("result-description");
-const selectionCards = document.querySelectorAll(".selection-card");
-
-let clickFlag = false;
-
-function showResult(title, description) {
-  if (!clickFlag) {
-    resultWrapper.style.display = "";
-    resultHeading.textContent = title + " INTERFACE";
-    resultDescription.textContent = description;
-    resultWrapper.classList.add("is-visible");
-    resultContainer.classList.add("is-active");
-  }
-}
-
-function hideResult() {
-  if (!clickFlag) {
-    resultWrapper.classList.remove("is-visible");
-    resultContainer.classList.remove("is-active");
-  }
-
-  const sdDirectory = document.getElementById("sd-directory");
-  if (sdDirectory && !clickFlag) {
-    sdDirectory.classList.remove("is-visible");
-    // Optionally hide completely after transition
-    setTimeout(() => {
-      if (!clickFlag) {
-        sdDirectory.classList.add("d-none");
-        const dynamicWrapper = document.getElementById("dynamic-fetch-wrapper");
-        if (dynamicWrapper) dynamicWrapper.classList.add("d-none");
-      }
-    }, 600);
-  }
+function showMenu() {
+  document.getElementById("splash-screen").classList.add("d-none");
+  document.getElementById("menu-screen").classList.remove("d-none");
 }
 
 // ============================================================
-// Upload Helper
+// Global state
 // ============================================================
-async function uploadSong(data, iteration, totalIterations, songName) {
-  try {
+let currentScreen = "menu";
+let selectedFile = null;
+
+// ============================================================
+// API endpoints (centralised)
+// ============================================================
+const API = {
+  uploadSong: "/api/songs/upload",
+  songsList: "/api/metadata",
+  streamSong: "/api/songs",
+  removePayload: "/remove_payload",
+  sdDirectory: "/sd_directory",
+  downloadFile: "/download_file",
+};
+
+// ============================================================
+// Upload helper – single request with both files
+// ============================================================
+function uploadSongWithMetadata(mp3File, jsonFile) {
+  return new Promise((resolve, reject) => {
     const formData = new FormData();
-    formData.append("file", data, songName);
+    formData.append("audio", mp3File, mp3File.name);
+    formData.append("metadata", jsonFile, jsonFile.name);
 
-    const response = await fetch("/upload_song", {
-      method: "POST",
-      headers: {
-        "X-Song-Name": songName,
-        "X-Chunk-Index": iteration.toString(),
-        "X-Total-Chunks": totalIterations.toString(),
-      },
-      body: formData,
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", API.uploadSong, true);
+
+    // Progress tracking
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        updateProgressBar(percent, mp3File.name);
+      }
     });
 
-    if (!response.ok) return "error";
-    return await response.text();
-  } catch (error) {
-    return "error";
-  }
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(true);
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`));
+      }
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("Network error during upload."));
+    });
+
+    xhr.send(formData);
+  });
+}
+
+function updateProgressBar(percent, filename) {
+  const progressBar = document.getElementById("progress-bar");
+  const progressPercentText = document.getElementById("progress-percent-text");
+  const uploadFilename = document.getElementById("upload-filename");
+  if (progressBar) progressBar.style.width = `${percent}%`;
+  if (progressPercentText) progressPercentText.textContent = `${percent}%`;
+  if (uploadFilename) uploadFilename.textContent = filename;
 }
 
 // ============================================================
-// Modal Logic (unchanged, using static HTML in index.html)
+// Metadata extraction with fallback (Dynamic Library Loading)
 // ============================================================
-function openCustomModal(targetName, isFolderTarget) {
+
+// Helper function to dynamically load jsmediatags if it isn't already present
+async function loadJsMediaTags() {
+  if (typeof window.jsmediatags !== "undefined") {
+    return true;
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src =
+      "https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js";
+    script.onload = () => resolve(true);
+    script.onerror = () =>
+      reject(new Error("Failed to load jsmediatags script."));
+    document.head.appendChild(script);
+  });
+}
+
+async function extractMp3Metadata(file) {
+  try {
+    await loadJsMediaTags();
+  } catch (err) {
+    console.warn(
+      "jsmediatags could not be loaded, metadata extraction skipped.",
+      err,
+    );
+    return {
+      songName: "",
+      artist: "",
+      album: "",
+      releaseYear: "",
+      duration: "",
+    };
+  }
+
   return new Promise((resolve) => {
-    const overlay = document.getElementById("custom-modal-overlay");
-    const step1 = document.getElementById("modal-step-1");
-    const step2 = document.getElementById("modal-step-2");
-    const targetNameSpan = document.getElementById("modal-target-name");
-
-    const elements = {
-      sibling: document.getElementById("btn-sibling"),
-      child: document.getElementById("btn-child"),
-      folder: document.getElementById("btn-folder"),
-      file: document.getElementById("btn-file"),
-      upload: document.getElementById("btn-upload"),
-      dropzone: document.getElementById("drop-zone"),
-      fileInput: document.getElementById("file-input"),
-      name: document.getElementById("modal-input-name"),
-      content: document.getElementById("modal-input-content"),
-      cancel: document.getElementById("btn-cancel"),
-      submit: document.getElementById("btn-submit"),
-      progressContainer: document.getElementById("upload-progress-container"),
-      progressCircle: document.getElementById("progress-circle"),
-      progressPercent: document.getElementById("progress-percent"),
-      uploadFilename: document.getElementById("upload-filename"),
-    };
-
-    // Reset modal state
-    elements.name.value = "";
-    elements.content.value = "";
-    elements.fileInput.value = "";
-    elements.progressContainer.classList.add("d-none");
-    elements.dropzone.classList.remove("d-none");
-    elements.submit.classList.remove("d-none");
-    elements.cancel.classList.remove("d-none");
-    elements.content.classList.add("d-none");
-    elements.name.classList.remove("d-none");
-
-    targetNameSpan.textContent = targetName;
-
-    let asChild = false;
-    let selectedType = "folder";
-
-    if (!isFolderTarget) {
-      step1.classList.add("d-none");
-      step2.classList.remove("d-none", "opacity-0");
-      selectedType = "file";
-      elements.name.focus();
-    } else {
-      step1.classList.remove("d-none", "opacity-0");
-      step2.classList.add("d-none", "opacity-0");
-    }
-
-    overlay.classList.add("is-visible");
-
-    function cleanup() {
-      overlay.classList.remove("is-visible");
-    }
-
-    function expandToStep2() {
-      step1.classList.add("opacity-0");
-      setTimeout(() => {
-        step1.classList.add("d-none");
-        step2.classList.remove("d-none");
-        void step2.offsetWidth;
-        step2.classList.remove("opacity-0");
-        if (selectedType !== "upload") elements.name.focus();
-      }, 300);
-    }
-
-    function selectType(type) {
-      selectedType = type;
-      elements.folder.classList.toggle("is-active", selectedType === "folder");
-      elements.file.classList.toggle("is-active", selectedType === "file");
-      elements.upload.classList.toggle("is-active", selectedType === "upload");
-
-      if (selectedType === "folder") {
-        elements.name.classList.remove("d-none");
-        elements.dropzone.classList.add("d-none");
-        elements.content.classList.add("d-none");
-      } else if (selectedType === "file") {
-        elements.name.classList.remove("d-none");
-        elements.dropzone.classList.add("d-none");
-        elements.content.classList.remove("d-none");
-      } else if (selectedType === "upload") {
-        elements.content.classList.add("d-none");
-        elements.name.classList.add("d-none");
-        elements.dropzone.classList.remove("d-none");
-      }
-    }
-
-    function submitForm() {
-      const name = elements.name.value.trim();
-      if (!name) {
-        elements.name.classList.add("is-error");
-        setTimeout(() => elements.name.classList.remove("is-error"), 300);
-        return;
-      }
-      cleanup();
-      resolve({
-        asChild,
-        itemType: selectedType,
-        itemName: name,
-        fileContent: selectedType === "file" ? elements.content.value : "",
-      });
-    }
-
-    elements.fileInput.onchange = async (event) => {
-      const chunkSize = 32768;
-      const songFile = event.target.files[0];
-      if (!songFile) return;
-
-      const songName = songFile.name;
-      const songSize = songFile.size;
-      const totalIterations = Math.ceil(songSize / chunkSize);
-
-      elements.dropzone.classList.add("d-none");
-      elements.submit.classList.add("d-none");
-      elements.cancel.classList.add("d-none");
-      elements.progressContainer.classList.remove("d-none");
-      elements.uploadFilename.textContent = songName;
-      elements.progressCircle.style.strokeDashoffset = "339.292";
-      elements.progressPercent.textContent = "0%";
-
-      for (let i = 0; i < totalIterations; i++) {
-        const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, songSize);
-        const chunk = songFile.slice(start, end);
-
-        const result = await uploadSong(chunk, i, totalIterations, songName);
-        if (result == "error") {
-          console.log("aborted at chunk: ", i);
-          elements.progressContainer.classList.add("d-none");
-          elements.dropzone.classList.remove("d-none");
-          elements.submit.classList.remove("d-none");
-          elements.cancel.classList.remove("d-none");
-          elements.fileInput.value = "";
-          return;
-        }
-
-        const percent = Math.round(((i + 1) / totalIterations) * 100);
-        elements.progressPercent.textContent = `${percent}%`;
-        const circleLength = 339.292;
-        const offset = circleLength - (percent / 100) * circleLength;
-        elements.progressCircle.style.strokeDashoffset = offset;
-      }
-
-      console.log("Upload complete for file: ", songName);
-      cleanup();
-
-      // Refresh directory after upload
-      await refreshSdDirectory();
-    };
-
-    elements.dropzone.onclick = (e) => {
-      e.stopPropagation();
-      elements.fileInput.click();
-    };
-
-    elements.sibling.onclick = () => {
-      asChild = false;
-      expandToStep2();
-    };
-    elements.child.onclick = () => {
-      asChild = true;
-      expandToStep2();
-    };
-    elements.folder.onclick = () => selectType("folder");
-    elements.file.onclick = () => selectType("file");
-    elements.upload.onclick = () => selectType("upload");
-    elements.cancel.onclick = () => {
-      cleanup();
-      resolve(null);
-    };
-    elements.submit.onclick = submitForm;
-    elements.name.onkeydown = (e) => {
-      if (e.key === "Enter") submitForm();
-    };
-
-    if (!isFolderTarget) selectType("file");
-    else selectType("folder");
+    window.jsmediatags.read(file, {
+      onSuccess: (tag) => {
+        const tags = tag.tags;
+        const metadata = {
+          songName: tags.title || "",
+          artist: tags.artist || "",
+          album: tags.album || "",
+          releaseYear: tags.year || "",
+          duration: "",
+        };
+        resolve(metadata);
+      },
+      onError: (error) => {
+        console.warn("Could not read metadata", error);
+        resolve({
+          songName: "",
+          artist: "",
+          album: "",
+          releaseYear: "",
+          duration: "",
+        });
+      },
+    });
   });
 }
 
 // ============================================================
-// Directory Rendering (only dynamic list items)
+// Sanitise filename: remove extension, replace spaces/special chars
 // ============================================================
-function buildDirectoryDOM(node, container) {
+function sanitiseBaseName(originalName) {
+  const withoutExt = originalName.replace(/\.[^/.]+$/, "");
+  const safe = withoutExt
+    .replace(/[^a-zA-Z0-9_\-]/g, "_") // replace unsafe characters with underscore
+    .replace(/_+/g, "_") // collapse multiple underscores
+    .replace(/^_+|_+$/g, ""); // trim leading/trailing underscores
+  return safe || "song"; // fallback if empty
+}
+
+// ============================================================
+// Modal handling
+// ============================================================
+function openUploadModal() {
+  const overlay = document.getElementById("upload-modal-overlay");
+  overlay.classList.add("is-visible");
+
+  selectedFile = null;
+  document.getElementById("input-song-name").value = "";
+  document.getElementById("input-artist").value = "";
+  document.getElementById("input-album").value = "";
+  document.getElementById("input-release-year").value = "";
+  document.getElementById("input-duration").value = "";
+  document.getElementById("input-color-primary").value = "#c1afa0";
+  document.getElementById("input-color-dark").value = "#6c584c";
+  document.getElementById("input-color-shadow").value = "#3f352f";
+  document.getElementById("drop-zone").classList.remove("d-none");
+  document.getElementById("selected-file-info").classList.add("d-none");
+  document.getElementById("upload-progress-container").classList.add("d-none");
+  document.getElementById("upload-error").classList.add("d-none");
+  document.getElementById("btn-upload-song").disabled = true;
+  document.getElementById("file-input").value = "";
+}
+
+document.getElementById("btn-cancel-upload").addEventListener("click", () => {
+  document
+    .getElementById("upload-modal-overlay")
+    .classList.remove("is-visible");
+});
+
+document.getElementById("drop-zone").addEventListener("click", () => {
+  document.getElementById("file-input").click();
+});
+
+document
+  .getElementById("file-input")
+  .addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Accept only MP3 files
+    if (
+      !file.type.match("audio/mpeg") &&
+      !file.name.toLowerCase().endsWith(".mp3")
+    ) {
+      alert("Please select a valid MP3 file.");
+      event.target.value = "";
+      return;
+    }
+
+    selectedFile = file;
+    document.getElementById("selected-file-name").textContent = file.name;
+    document.getElementById("selected-file-info").classList.remove("d-none");
+
+    try {
+      const metadata = await extractMp3Metadata(file);
+      if (!document.getElementById("input-song-name").value)
+        document.getElementById("input-song-name").value = metadata.songName;
+      if (!document.getElementById("input-artist").value)
+        document.getElementById("input-artist").value = metadata.artist;
+      if (!document.getElementById("input-album").value)
+        document.getElementById("input-album").value = metadata.album;
+      if (!document.getElementById("input-release-year").value)
+        document.getElementById("input-release-year").value =
+          metadata.releaseYear;
+
+      // Automatically extract duration
+      const audio = new Audio(URL.createObjectURL(file));
+      audio.addEventListener("loadedmetadata", () => {
+        const duration = audio.duration;
+        const minutes = Math.floor(duration / 60);
+        const seconds = Math.floor(duration % 60);
+        document.getElementById("input-duration").value =
+          `${minutes}:${seconds.toString().padStart(2, "0")}`;
+      });
+    } catch (err) {
+      console.warn("Metadata extraction failed, user can fill manually", err);
+    }
+
+    document.getElementById("btn-upload-song").disabled = false;
+  });
+
+document
+  .getElementById("btn-upload-song")
+  .addEventListener("click", async () => {
+    if (!selectedFile) return;
+
+    const songName = document.getElementById("input-song-name").value.trim();
+    const artist = document.getElementById("input-artist").value.trim();
+    const album = document.getElementById("input-album").value.trim();
+    const releaseYear = document
+      .getElementById("input-release-year")
+      .value.trim();
+    const durationText = document.getElementById("input-duration").value.trim();
+
+    // Validate required fields
+    if (!songName || !artist || !album || !releaseYear || !durationText) {
+      alert("Please fill in all metadata fields.");
+      return;
+    }
+
+    // Release year must be a 4‑digit year
+    if (!/^\d{4}$/.test(releaseYear)) {
+      alert("Release year must be a 4‑digit year (e.g., 2024).");
+      return;
+    }
+
+    // Convert duration string to seconds
+    const durationParts = durationText.split(":");
+    let durationSeconds = 0;
+    if (durationParts.length === 2) {
+      const minutes = parseInt(durationParts[0], 10);
+      const seconds = parseInt(durationParts[1], 10);
+      if (!isNaN(minutes) && !isNaN(seconds)) {
+        durationSeconds = minutes * 60 + seconds;
+      }
+    }
+    if (durationSeconds <= 0) {
+      alert("Invalid duration. Please check the duration field.");
+      return;
+    }
+
+    const colorPrimary = document.getElementById("input-color-primary").value;
+    const colorDark = document.getElementById("input-color-dark").value;
+    const colorShadow = document.getElementById("input-color-shadow").value;
+
+    // Construct base name for both files
+    const baseName = sanitiseBaseName(selectedFile.name);
+    const mp3FileName = `${baseName}.mp3`;
+    const jsonFileName = `${baseName}.json`;
+    const mp3Path = `/songs/${mp3FileName}`; // remote path inside /songs
+
+    // Build metadata JSON object (no album art)
+    const metadataJSON = {
+      title: songName,
+      artist: artist,
+      album: album,
+      releaseYear: parseInt(releaseYear, 10),
+      duration: durationSeconds,
+      cardColors: [colorPrimary, colorDark, colorShadow],
+      file_path: mp3Path,
+    };
+
+    // Create a Blob for the JSON file
+    const jsonBlob = new Blob([JSON.stringify(metadataJSON, null, 2)], {
+      type: "application/json",
+    });
+    const jsonFile = new File([jsonBlob], jsonFileName, {
+      type: "application/json",
+    });
+
+    // Disable UI during upload
+    document.getElementById("drop-zone").classList.add("d-none");
+    document.getElementById("selected-file-info").classList.add("d-none");
+    document
+      .getElementById("upload-progress-container")
+      .classList.remove("d-none");
+    document.getElementById("upload-error").classList.add("d-none");
+    document.getElementById("btn-upload-song").disabled = true;
+    document.getElementById("btn-cancel-upload").disabled = true;
+
+    updateProgressBar(0, selectedFile.name);
+
+    try {
+      // Send both files in one multipart request
+      await uploadSongWithMetadata(selectedFile, jsonFile);
+
+      updateProgressBar(100, selectedFile.name);
+      setTimeout(() => {
+        document
+          .getElementById("upload-modal-overlay")
+          .classList.remove("is-visible");
+        selectedFile = null;
+        document.getElementById("btn-upload-song").disabled = true;
+        document.getElementById("btn-cancel-upload").disabled = false;
+        if (currentScreen === "compendium") loadCompendium();
+      }, 500);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      document.getElementById("upload-error").textContent =
+        "Upload failed: " + err.message;
+      document.getElementById("upload-error").classList.remove("d-none");
+      document.getElementById("btn-upload-song").disabled = false;
+      document.getElementById("btn-cancel-upload").disabled = false;
+      document.getElementById("drop-zone").classList.remove("d-none");
+      document.getElementById("selected-file-info").classList.remove("d-none");
+    }
+  });
+
+// ============================================================
+// Compendium loading – now fetches from /api/metadata
+// ============================================================
+async function loadCompendium() {
+  const grid = document.getElementById("song-grid");
+  grid.innerHTML = "";
+  try {
+    const response = await fetch(API.songsList);
+    if (!response.ok) throw new Error("Failed to fetch songs");
+    const songs = await response.json();
+    songs.forEach((song) => {
+      const card = createSongCard(song);
+      grid.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Error loading songs:", err);
+  }
+}
+
+function createSongCard(song) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "song-card-wrapper";
+
+  const card = document.createElement("div");
+  card.className = "song-card";
+  card.style.setProperty("--song-primary", song.cardColors?.[0] || "#c1afa0");
+  card.style.setProperty("--song-dark", song.cardColors?.[1] || "#6c584c");
+  card.style.setProperty("--song-shadow", song.cardColors?.[2] || "#3f352f");
+
+  // Album art removed – just use a plain background
+  const artDiv = document.createElement("div");
+  artDiv.className = "album-art";
+  artDiv.style.backgroundColor = "rgba(0,0,0,0.3)";
+
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "song-title";
+  const h1 = document.createElement("h1");
+  h1.textContent = song.title;
+  titleDiv.appendChild(h1);
+
+  const detailsDiv = document.createElement("div");
+  detailsDiv.className = "song-details";
+  const rows = [
+    { label: "ARTIST", value: song.artist },
+    { label: "ALBUM", value: song.album },
+    { label: "RELEASE", value: song.releaseYear },
+    { label: "DURATION", value: formatDuration(song.duration) },
+  ];
+  rows.forEach((row) => {
+    const detail = document.createElement("div");
+    detail.className = "detail";
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "label";
+    labelSpan.textContent = row.label;
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "value";
+    valueSpan.textContent = row.value;
+    detail.appendChild(labelSpan);
+    detail.appendChild(valueSpan);
+    detailsDiv.appendChild(detail);
+  });
+
+  card.appendChild(artDiv);
+  card.appendChild(titleDiv);
+  card.appendChild(detailsDiv);
+  wrapper.appendChild(card);
+
+  const playBtn = document.createElement("button");
+  playBtn.className = "play-button";
+  playBtn.textContent = "▶";
+  playBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    // Future playback: stream MP3 from API.streamSong + song.file_path
+    // e.g., window.location.href = API.streamSong + song.file_path;
+  });
+  wrapper.appendChild(playBtn);
+
+  // Click to download (or stream)
+  card.addEventListener("click", () => {
+    if (song.file_path) {
+      window.location.href =
+        API.downloadFile + "?path=" + encodeURIComponent(song.file_path);
+    }
+  });
+
+  return wrapper;
+}
+
+// Helper to format seconds as M:SS
+function formatDuration(totalSeconds) {
+  if (!totalSeconds || isNaN(totalSeconds)) return "0:00";
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+// ============================================================
+// Delete Mode - Directory Tree
+// ============================================================
+function buildDeleteDirectoryDOM(node, container) {
   const ul = document.createElement("ul");
 
   if (node.type === "folder") {
@@ -1218,7 +1262,7 @@ function buildDirectoryDOM(node, container) {
         span.className = "folder";
         span.textContent = child.name + "/";
         li.appendChild(span);
-        buildDirectoryDOM(child, li); // recursion
+        buildDeleteDirectoryDOM(child, li);
       } else {
         const span = document.createElement("span");
         span.className = "file";
@@ -1236,6 +1280,63 @@ function buildDirectoryDOM(node, container) {
         li.appendChild(sizeSpan);
       }
 
+      li.style.cursor = "pointer";
+      li.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        const target = event.target;
+        const isFolder = target.classList.contains("folder");
+        const isFile =
+          target.classList.contains("file") ||
+          target.classList.contains("size");
+        if (!isFolder && !isFile) return;
+
+        let clickedLi = target.closest("li");
+        let pathParts = [];
+        let currentLi = clickedLi;
+
+        while (currentLi && currentLi.closest("#delete-directory-list")) {
+          let folderSpan = Array.from(currentLi.children).find((el) =>
+            el.classList.contains("folder"),
+          );
+          let fileSpan = Array.from(currentLi.children).find((el) =>
+            el.classList.contains("file"),
+          );
+
+          if (folderSpan) {
+            pathParts.unshift(folderSpan.textContent.trim().replace(/\/$/, ""));
+          } else if (fileSpan) {
+            pathParts.unshift(fileSpan.textContent.trim());
+          }
+
+          let parentUl = currentLi.parentElement;
+          if (!parentUl || parentUl.tagName.toLowerCase() !== "ul") break;
+          let parentLi = parentUl.parentElement.closest("li");
+          if (!parentLi) break;
+          currentLi = parentLi;
+        }
+
+        let fullPath = "/" + pathParts.join("/");
+        if (fullPath === "/") return;
+
+        if (
+          !confirm(`Are you sure you want to permanently delete:\n${fullPath}?`)
+        )
+          return;
+
+        try {
+          const response = await fetch(API.removePayload, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: fullPath }),
+          });
+          if (!response.ok) throw new Error("Remove failed");
+          await refreshDeleteDirectory();
+        } catch (err) {
+          console.error("Remove request failed:", err);
+          alert("Deletion failed");
+        }
+      });
+
       ul.appendChild(li);
     });
   }
@@ -1243,303 +1344,61 @@ function buildDirectoryDOM(node, container) {
   container.appendChild(ul);
 }
 
-function renderDirectory(data) {
-  const listElement = document.getElementById("sd-directory-list");
-  if (!listElement) return;
-
-  listElement.innerHTML = ""; // clear existing list
-  buildDirectoryDOM(data, listElement);
-}
-
-async function refreshSdDirectory() {
+async function refreshDeleteDirectory() {
   try {
-    const response = await fetch("/sd_directory");
+    const response = await fetch(API.sdDirectory);
     if (!response.ok) throw new Error("Failed to fetch directory");
     const data = await response.json();
-    renderDirectory(data);
-
-    // Show SD directory and its wrapper
-    const sdDirectory = document.getElementById("sd-directory");
-    const dynamicWrapper = document.getElementById("dynamic-fetch-wrapper");
-    if (sdDirectory) {
-      sdDirectory.classList.remove("d-none");
-      // Trigger opacity transition
-      requestAnimationFrame(() => {
-        sdDirectory.classList.add("is-visible");
-      });
-    }
-    if (dynamicWrapper) {
-      dynamicWrapper.classList.remove("d-none");
-    }
+    const listElement = document.getElementById("delete-directory-list");
+    if (!listElement) return;
+    listElement.innerHTML = "";
+    buildDeleteDirectoryDOM(data, listElement);
   } catch (err) {
     console.error("Directory refresh failed:", err);
   }
 }
 
 // ============================================================
-// SD Directory Interaction Listener
+// Screen navigation
 // ============================================================
-function sdDirectoryListener() {
-  const sdDirectory = document.getElementById("sd-directory");
-  if (!sdDirectory) return;
-
-  const addBtn = document.getElementById("add-file");
-  const removeBtn = document.getElementById("remove-file");
-  const downloadBtn = document.getElementById("download-file");
-
-  function resetModes() {
-    sdDirectory.classList.remove("is-adding", "is-removing", "is-downloading");
-    if (addBtn) addBtn.textContent = "ADD ITEM";
-    if (removeBtn) removeBtn.textContent = "REMOVE ITEM";
-    if (downloadBtn) downloadBtn.textContent = "GET ITEM";
-  }
-
-  if (addBtn) {
-    addBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (sdDirectory.classList.contains("is-adding")) {
-        resetModes();
-      } else {
-        resetModes();
-        sdDirectory.classList.add("is-adding");
-        addBtn.textContent = "CANCEL ADD";
-      }
-    };
-  }
-
-  if (removeBtn) {
-    removeBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (sdDirectory.classList.contains("is-removing")) {
-        resetModes();
-      } else {
-        resetModes();
-        sdDirectory.classList.add("is-removing");
-        removeBtn.textContent = "CANCEL REMOVE";
-      }
-    };
-  }
-
-  if (downloadBtn) {
-    downloadBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (sdDirectory.classList.contains("is-downloading")) {
-        resetModes();
-      } else {
-        resetModes();
-        sdDirectory.classList.add("is-downloading");
-        downloadBtn.textContent = "CANCEL GET";
-      }
-    };
-  }
-
-  sdDirectory.onclick = async (event) => {
-    const target = event.target;
-    const isFolder = target.classList.contains("folder");
-    const isFile =
-      target.classList.contains("file") || target.classList.contains("size");
-
-    if (!isFolder && !isFile) return;
-
-    // ADD MODE
-    if (sdDirectory.classList.contains("is-adding")) {
-      if (!isFolder) return;
-      event.stopPropagation();
-
-      const clickedLi = target.closest("li");
-      let targetName = "";
-      const folderSpan = clickedLi.querySelector(".folder");
-      if (folderSpan)
-        targetName = folderSpan.textContent.trim().replace(/\/$/, "");
-
-      const modalResult = await openCustomModal(targetName, !!folderSpan);
-      if (!modalResult) return;
-
-      const { asChild, itemType, itemName, fileContent } = modalResult;
-      resetModes();
-
-      let payloadParent = "root";
-      if (asChild && folderSpan) {
-        payloadParent = targetName;
-      } else {
-        const parentLi = clickedLi.parentElement.closest("li");
-        if (parentLi) {
-          const parentFolderSpan = parentLi.querySelector(".folder");
-          if (parentFolderSpan)
-            payloadParent = parentFolderSpan.textContent
-              .trim()
-              .replace(/\/$/, "");
-        }
-      }
-      payloadParent = payloadParent.replace(/\/$/, "");
-
-      const payload = {
-        name: itemName,
-        type: itemType,
-        ...(itemType === "file" ? { content: fileContent } : {}),
-        parent: payloadParent,
-      };
-
-      try {
-        const response = await fetch("/create_payload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!response.ok) throw new Error("Create failed");
-        await refreshSdDirectory();
-      } catch (err) {
-        console.error("Payload request failed:", err);
-      }
-    }
-    // REMOVE MODE
-    else if (sdDirectory.classList.contains("is-removing")) {
-      event.stopPropagation();
-
-      let clickedLi = target.closest("li");
-      let pathParts = [];
-      let currentLi = clickedLi;
-
-      while (currentLi && currentLi.closest("#sd-directory")) {
-        let folderSpan = Array.from(currentLi.children).find((el) =>
-          el.classList.contains("folder"),
-        );
-        let fileSpan = Array.from(currentLi.children).find((el) =>
-          el.classList.contains("file"),
-        );
-
-        if (folderSpan) {
-          pathParts.unshift(folderSpan.textContent.trim().replace(/\/$/, ""));
-        } else if (fileSpan) {
-          pathParts.unshift(fileSpan.textContent.trim());
-        }
-
-        let parentUl = currentLi.parentElement;
-        if (!parentUl || parentUl.tagName.toLowerCase() !== "ul") break;
-        let parentLi = parentUl.parentElement.closest("li");
-        if (!parentLi) break;
-        currentLi = parentLi;
-      }
-
-      let fullPath = "/" + pathParts.join("/");
-
-      if (
-        !confirm(`Are you sure you want to permanently delete:\n${fullPath}?`)
-      )
-        return;
-
-      resetModes();
-
-      try {
-        const response = await fetch("/remove_payload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path: fullPath }),
-        });
-        if (!response.ok) throw new Error("Remove failed");
-        await refreshSdDirectory();
-      } catch (err) {
-        console.error("Remove request failed:", err);
-      }
-    }
-    // DOWNLOAD MODE
-    else if (sdDirectory.classList.contains("is-downloading")) {
-      if (!isFile) return;
-      event.stopPropagation();
-
-      let clickedLi = target.closest("li");
-      let pathParts = [];
-      let currentLi = clickedLi;
-
-      while (currentLi && currentLi.closest("#sd-directory")) {
-        let folderSpan = Array.from(currentLi.children).find((el) =>
-          el.classList.contains("folder"),
-        );
-        let fileSpan = Array.from(currentLi.children).find((el) =>
-          el.classList.contains("file"),
-        );
-
-        if (folderSpan) {
-          pathParts.unshift(folderSpan.textContent.trim().replace(/\/$/, ""));
-        } else if (fileSpan) {
-          pathParts.unshift(fileSpan.textContent.trim());
-        }
-
-        let parentUl = currentLi.parentElement;
-        if (!parentUl || parentUl.tagName.toLowerCase() !== "ul") break;
-        let parentLi = parentUl.parentElement.closest("li");
-        if (!parentLi) break;
-        currentLi = parentLi;
-      }
-
-      let fullPath = "/" + pathParts.join("/");
-      window.location.href =
-        "/download_file?path=" + encodeURIComponent(fullPath);
-      resetModes();
-    }
-  };
-}
-
-// ============================================================
-// Selection Card Event Listeners
-// ============================================================
-selectionCards.forEach((card) => {
-  card.addEventListener("mouseenter", (event) => {
-    const { title, description } = event.currentTarget.dataset;
-    showResult(title, description);
-  });
-
-  card.addEventListener("mouseleave", () => {
-    if (!clickFlag) hideResult();
-  });
-
-  card.addEventListener("click", (event) => {
-    event.stopPropagation();
-    clickFlag = true;
-
-    resultWrapper.classList.remove("is-visible");
-    resultWrapper.style.display = "none";
-    resultContainer.classList.add("is-active");
-
-    const title = event.currentTarget.dataset.title;
-    const dynamicWrapper = document.getElementById("dynamic-fetch-wrapper");
-    const sdDirectory = document.getElementById("sd-directory");
-    const placeholder = document.getElementById("placeholder-section");
-
-    // Hide all sections first
-    if (sdDirectory) sdDirectory.classList.add("d-none");
-    if (placeholder) placeholder.classList.add("d-none");
-    if (dynamicWrapper) dynamicWrapper.classList.remove("d-none");
-
-    if (title === "SD CARD") {
-      // Show SD directory and fetch data
-      sdDirectory.classList.remove("d-none");
-      // Fetch and render directory
-      refreshSdDirectory();
-    } else {
-      // Show placeholder for other sections
-      placeholder.classList.remove("d-none");
-    }
-  });
+document.getElementById("btn-compendium").addEventListener("click", () => {
+  currentScreen = "compendium";
+  document.getElementById("menu-screen").classList.add("d-none");
+  document.getElementById("compendium-screen").classList.remove("d-none");
+  loadCompendium();
 });
 
-// ============================================================
-// Global Click Handler
-// ============================================================
-document.body.addEventListener("click", (event) => {
-  if (
-    event.target.closest("#result-container") ||
-    event.target.closest("#custom-modal-overlay")
-  ) {
-    return;
-  }
-  if (clickFlag) {
-    clickFlag = false;
-    hideResult();
-  }
+document.getElementById("btn-back-menu").addEventListener("click", () => {
+  currentScreen = "menu";
+  document.getElementById("compendium-screen").classList.add("d-none");
+  document.getElementById("menu-screen").classList.remove("d-none");
 });
 
-sdDirectoryListener();
+document.getElementById("btn-create").addEventListener("click", () => {
+  openUploadModal();
+});
+
+document.getElementById("btn-delete").addEventListener("click", () => {
+  currentScreen = "delete";
+  document.getElementById("menu-screen").classList.add("d-none");
+  document.getElementById("delete-screen").classList.remove("d-none");
+  refreshDeleteDirectory();
+});
+
+document
+  .getElementById("btn-back-menu-delete")
+  .addEventListener("click", () => {
+    currentScreen = "menu";
+    document.getElementById("delete-screen").classList.add("d-none");
+    document.getElementById("menu-screen").classList.remove("d-none");
+  });
+
+// ============================================================
+// Initialize
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  initSplashTypewriter();
+});
 
 </script>
 </body>
