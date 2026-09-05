@@ -708,3 +708,9 @@ h5 {
 
   transition: stroke-dashoffset 0.3s ease;
 }
+
+#song-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

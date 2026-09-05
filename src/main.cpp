@@ -97,6 +97,43 @@ void handle_sd_directory() {
   server.send(200, "application/json", json);
 }
 
+// New handler for metadata upload (JSON)
+void handle_metadata_upload() {
+  String body = server.arg("plain");
+  JsonDocument doc;
+  DeserializationError err = deserializeJson(doc, body);
+
+  if (err) {
+    server.send(400, "application/json",
+                "{\"success\":false,\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  if (Storage::save_metadata_sd(doc)) {
+    server.send(200, "application/json", "{\"success\":true}");
+  } else {
+    server.send(500, "application/json",
+                "{\"success\":false,\"error\":\"Failed to save metadata\"}");
+  }
+}
+
+// Final response for cover upload
+void handle_cover_upload() { server.send(200, "text/plain", "OK"); }
+
+// Handle file upload for cover
+void handle_cover_file_upload() {
+  HTTPUpload &upload = server.upload();
+
+  if (upload.status == UPLOAD_FILE_START) {
+    String song_name = server.header("X-Song-Name");
+    Storage::upload_start_cover_sd(song_name);
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    Storage::upload_write_cover_sd(upload.buf, upload.currentSize);
+  } else if (upload.status == UPLOAD_FILE_END) {
+    Storage::upload_end_cover_sd();
+  }
+}
+
 void setup() {
   delay(5000);
   Serial.begin(115200);
@@ -118,6 +155,7 @@ void setup() {
   size_t headerKeysCount = sizeof(headerKeys) / sizeof(char *);
   server.collectHeaders(headerKeys, headerKeysCount);
 
+  // Existing endpoints
   server.on(
       "/upload_song", HTTP_POST, []() { server.send(200, "text/plain", "OK"); },
       handle_song_upload);
@@ -134,9 +172,19 @@ void setup() {
 
   server.on("/sd_directory", HTTP_GET, handle_sd_directory);
 
+  // New endpoints for metadata and cover upload
+  server.on("/upload_metadata", HTTP_POST, handle_metadata_upload);
+
+  server.on("/upload_cover", HTTP_POST, handle_cover_upload,
+            handle_cover_file_upload);
+
   server.begin();
 
   Storage::begin();
+
+  if (!Storage::ensure_directories()) {
+    Serial.println("Warning: Failed to create required directories.");
+  }
 
   Serial.println("SD Card Directory JSON endpoint ready.");
 }

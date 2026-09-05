@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orpheus</title>
     <link rel="stylesheet" href="styles.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"
+      defer
+    ></script>
     <script src="index.js" defer></script>
   </head>
   <body>
@@ -136,6 +140,44 @@
             class="modal-textarea d-none"
             placeholder="Enter file content (optional)..."
           ></textarea>
+
+          <div id="song-metadata">
+            <input
+              id="song-name"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Song Name..."
+              autocomplete="off"
+            />
+            <input
+              id="artist-name"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Artist Name..."
+              autocomplete="off"
+            />
+            <input
+              id="album-name"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Album Name..."
+              autocomplete="off"
+            />
+            <input
+              id="release-year"
+              class="modal-input metadata-input"
+              type="number"
+              placeholder="Enter Release Year..."
+              autocomplete="off"
+            />
+            <input
+              id="duration"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Duration..."
+              autocomplete="off"
+            />
+          </div>
 
           <div id="drop-zone" class="d-none">
             <p>CLICK TO UPLOAD</p>

@@ -1,6 +1,7 @@
 #include "Storage.h"
 
 File Storage::currentFile;
+File Storage::currentCoverFile;
 
 void Storage::print_sd_directory(File dir, int depth) {
   while (true) {
@@ -176,16 +177,79 @@ void Storage::remove_payload_sd(const JsonDocument &payload) {
 }
 
 void Storage::upload_start_sd(String song_name, int chunk_index) {
+  // Ensure song_name starts with "/Songs/"
   if (!song_name.startsWith("/")) {
     song_name = "/" + song_name;
   }
+  if (!song_name.startsWith("/Songs/")) {
+    // Remove any leading slash and re‑add properly
+    if (song_name.startsWith("/"))
+      song_name.remove(0, 1);
+    song_name = "/Songs/" + song_name;
+  }
 
   const char *mode = (chunk_index == 0) ? FILE_WRITE : FILE_APPEND;
-
   currentFile = SD.open(song_name, mode);
   if (!currentFile) {
     Serial.print("Error: Failed to open file on SD for path: ");
     Serial.println(song_name);
+  }
+}
+
+bool Storage::ensure_directories() {
+  // Create required directories if they don't exist
+  const char *dirs[] = {"/Songs", "/_Metadata", "/_CoverArt"};
+  for (const char *dir : dirs) {
+    if (!SD.exists(dir)) {
+      if (!SD.mkdir(dir)) {
+        Serial.printf("Failed to create directory: %s\n", dir);
+        return false;
+      }
+      Serial.printf("Created directory: %s\n", dir);
+    }
+  }
+  return true;
+}
+
+bool Storage::save_metadata_sd(const JsonDocument &metadata) {
+  const char *name = metadata["name"] | "";
+  if (strlen(name) == 0)
+    return false;
+
+  String path = "/_Metadata/" + String(name) + ".json";
+  File file = SD.open(path, FILE_WRITE);
+  if (!file)
+    return false;
+
+  // Serialize JSON to the file
+  String json;
+  serializeJson(metadata, json);
+  file.print(json);
+  file.close();
+  return true;
+}
+
+void Storage::upload_start_cover_sd(String song_name) {
+  // Remove leading slash if present and construct path
+  if (song_name.startsWith("/"))
+    song_name.remove(0, 1);
+  String path = "/_CoverArt/" + song_name + ".png"; // client sends PNG
+  currentCoverFile = SD.open(path, FILE_WRITE);
+  if (!currentCoverFile) {
+    Serial.print("Error: Failed to open cover file: ");
+    Serial.println(path);
+  }
+}
+
+void Storage::upload_write_cover_sd(uint8_t *buf, size_t size) {
+  if (currentCoverFile) {
+    currentCoverFile.write(buf, size);
+  }
+}
+
+void Storage::upload_end_cover_sd() {
+  if (currentCoverFile) {
+    currentCoverFile.close();
   }
 }
 

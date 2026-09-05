@@ -10,7 +10,9 @@ def combine_web_to_header(html_path, css_path, js_path, cpp_header_path):
             return
 
     # Ensure output directory exists before writing
-    os.makedirs(os.path.dirname(cpp_header_path), exist_ok=True)
+    output_dir = os.path.dirname(cpp_header_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
 
     # 2. Read contents of all three files
     with open(html_path, 'r', encoding='utf-8') as file:
@@ -22,17 +24,17 @@ def combine_web_to_header(html_path, css_path, js_path, cpp_header_path):
     with open(js_path, 'r', encoding='utf-8') as file:
         js_content = file.read()
 
-    # 3. Replace CSS <link> tag with a <style> block
-    css_pattern = re.compile(r'<link[^>]*rel=["\']stylesheet["\'][^>]*>')
+    # 3. Replace CSS <link> tag for styles.css with a <style> block
+    css_pattern = re.compile(r'<link[^>]*href=["\'](?:.*?/)?styles\.css["\'][^>]*>', re.IGNORECASE)
     style_block = f"<style>\n{css_content}\n</style>"
     html_content = css_pattern.sub(lambda _: style_block, html_content, count=1)
 
-    # 4. Remove external JS <script> tag from the <head>
-    js_pattern = re.compile(r'<script[^>]*src=["\'][^"\']+["\'][^>]*>[\s\S]*?</script>')
+    # 4. Remove ONLY local index.js script tag (preserves external CDNs like jsmediatags)
+    js_pattern = re.compile(r'<script[^>]*src=["\'](?:\./)?index\.js["\'][^>]*>[\s\S]*?</script>', re.IGNORECASE)
     html_content = js_pattern.sub('', html_content)
 
-    # 5. Inject inline JS before closing </body> tag
-    script_block = f"<script>\n{js_content}\n</script>\n</body>"
+    # 5. Inject inline JS as ES module before closing </body> tag
+    script_block = f'<script type="module">\n{js_content}\n</script>\n</body>'
     html_content = re.sub(r'(?i)</body>', lambda _: script_block, html_content)
 
     # 6. Generate C++ Header File (.h) with Arduino.h included

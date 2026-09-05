@@ -722,7 +722,17 @@ h5 {
   transition: stroke-dashoffset 0.3s ease;
 }
 
+#song-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 </style>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"
+      defer
+    ></script>
     
   </head>
   <body>
@@ -855,6 +865,44 @@ h5 {
             placeholder="Enter file content (optional)..."
           ></textarea>
 
+          <div id="song-metadata">
+            <input
+              id="song-name"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Song Name..."
+              autocomplete="off"
+            />
+            <input
+              id="artist-name"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Artist Name..."
+              autocomplete="off"
+            />
+            <input
+              id="album-name"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Album Name..."
+              autocomplete="off"
+            />
+            <input
+              id="release-year"
+              class="modal-input metadata-input"
+              type="number"
+              placeholder="Enter Release Year..."
+              autocomplete="off"
+            />
+            <input
+              id="duration"
+              class="modal-input metadata-input"
+              type="text"
+              placeholder="Enter Duration..."
+              autocomplete="off"
+            />
+          </div>
+
           <div id="drop-zone" class="d-none">
             <p>CLICK TO UPLOAD</p>
             <input type="file" id="file-input" hidden />
@@ -909,10 +957,13 @@ h5 {
         </div>
       </div>
     </div>
-  <script>
+  <script type="module">
 // ============================================================
 // Typewriter Effect
 // ============================================================
+
+import { ID3Writer } from "https://cdn.jsdelivr.net/npm/browser-id3-writer@6.4.0/dist/browser-id3-writer.mjs";
+
 const initTypewriter = () => {
   const heading = document.getElementById("typewriter-heading");
   const phrases = ["renx-byte...", "Test ENV..."];
@@ -1018,6 +1069,43 @@ async function uploadSong(data, iteration, totalIterations, songName) {
   }
 }
 
+async function uploadMetadata(metadata) {
+  try {
+    const response = await fetch("/upload_metadata", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(metadata),
+    });
+
+    if (!response.ok) return "error";
+    return await response.text();
+  } catch (error) {
+    return "error";
+  }
+}
+
+async function uploadCover(coverFile, songName) {
+  try {
+    const formData = new FormData();
+    formData.append("file", coverFile, "cover.png");
+
+    const response = await fetch("/upload_cover", {
+      method: "POST",
+      headers: {
+        "X-Song-Name": songName, // optional, helps associate cover with song on ESP32
+      },
+      body: formData,
+    });
+
+    if (!response.ok) return "error";
+    return await response.text();
+  } catch (error) {
+    return "error";
+  }
+}
+
 // ============================================================
 // Modal Logic (unchanged, using static HTML in index.html)
 // ============================================================
@@ -1034,6 +1122,7 @@ function openCustomModal(targetName, isFolderTarget) {
       folder: document.getElementById("btn-folder"),
       file: document.getElementById("btn-file"),
       upload: document.getElementById("btn-upload"),
+      metadata: document.getElementById("song-metadata"),
       dropzone: document.getElementById("drop-zone"),
       fileInput: document.getElementById("file-input"),
       name: document.getElementById("modal-input-name"),
@@ -1099,14 +1188,17 @@ function openCustomModal(targetName, isFolderTarget) {
         elements.name.classList.remove("d-none");
         elements.dropzone.classList.add("d-none");
         elements.content.classList.add("d-none");
+        elements.metadata.classList.add("d-none");
       } else if (selectedType === "file") {
         elements.name.classList.remove("d-none");
         elements.dropzone.classList.add("d-none");
         elements.content.classList.remove("d-none");
+        elements.metadata.classList.add("d-none");
       } else if (selectedType === "upload") {
         elements.content.classList.add("d-none");
         elements.name.classList.add("d-none");
         elements.dropzone.classList.remove("d-none");
+        elements.metadata.classList.remove("d-none");
       }
     }
 
@@ -1127,35 +1219,109 @@ function openCustomModal(targetName, isFolderTarget) {
     }
 
     elements.fileInput.onchange = async (event) => {
+      const songNameInput = document.getElementById("song-name").value;
+      const songArtistInput = document.getElementById("artist-name").value;
+      const songAlbumInput = document.getElementById("album-name").value;
+      const songReleaseInput = document.getElementById("release-year").value;
+      const songDurationInput = document.getElementById("duration").value;
+
       const chunkSize = 32768;
-      const songFile = event.target.files[0];
-      if (!songFile) return;
+      const tempFile = event.target.files[0];
+      if (!tempFile) return;
 
-      const songName = songFile.name;
-      const songSize = songFile.size;
-      const totalIterations = Math.ceil(songSize / chunkSize);
+      let pictureWrapper;
+      let pictureFormat;
 
+      const tag = await new Promise((resolve, reject) => {
+        jsmediatags.read(tempFile, {
+          onSuccess: resolve,
+          onError: reject,
+        });
+      });
+
+      pictureWrapper = tag.tags.picture.data;
+      pictureFormat = tag.tags.picture.format;
+
+      const blob = new Blob([new Uint8Array(pictureWrapper)], {
+        type: pictureFormat,
+      });
+
+      const coverPng = new File([blob], "cover.png", {
+        type: "image/png",
+      });
+
+      // Build metadata JSON object
+      const metadata = {
+        name: songNameInput,
+        artist: songArtistInput,
+        album: songAlbumInput,
+        releaseYear: songReleaseInput,
+        duration: songDurationInput,
+      };
+
+      // Show progress UI (optional: you might want to indicate metadata/cover upload)
       elements.dropzone.classList.add("d-none");
       elements.submit.classList.add("d-none");
       elements.cancel.classList.add("d-none");
       elements.progressContainer.classList.remove("d-none");
-      elements.uploadFilename.textContent = songName;
+      elements.uploadFilename.textContent = tempFile.name;
+      elements.progressCircle.style.strokeDashoffset = "339.292";
+      elements.progressPercent.textContent = "0%";
+
+      // 1. Send metadata
+      const metadataResult = await uploadMetadata(metadata);
+      if (metadataResult === "error") {
+        console.log("Metadata upload failed");
+        resetUploadUI();
+        return;
+      }
+
+      // 2. Send cover image
+      const coverResult = await uploadCover(coverPng, tempFile.name);
+      if (coverResult === "error") {
+        console.log("Cover upload failed");
+        resetUploadUI();
+        return;
+      }
+
+      // 3. Continue with song chunk upload as before
+      const arrayBuffer = await tempFile.arrayBuffer();
+      const writer = new ID3Writer(arrayBuffer);
+
+      writer
+        .setFrame("TIT2", songNameInput)
+        .setFrame("TPE1", [songArtistInput])
+        .setFrame("TALB", songAlbumInput)
+        .setFrame("TYER", songReleaseInput)
+        .setFrame("APIC", {
+          type: 3,
+          data: new Uint8Array(pictureWrapper).buffer,
+          description: "cover",
+        });
+
+      writer.addTag();
+
+      const newSong = new File([writer.getBlob()], tempFile.name, {
+        type: "audio/mpeg",
+      });
+
+      const songName = newSong.name;
+      const songSize = newSong.size;
+      const totalIterations = Math.ceil(songSize / chunkSize);
+
+      // Reset progress for song upload (metadata/cover progress may have altered it)
       elements.progressCircle.style.strokeDashoffset = "339.292";
       elements.progressPercent.textContent = "0%";
 
       for (let i = 0; i < totalIterations; i++) {
         const start = i * chunkSize;
         const end = Math.min(start + chunkSize, songSize);
-        const chunk = songFile.slice(start, end);
+        const chunk = newSong.slice(start, end);
 
         const result = await uploadSong(chunk, i, totalIterations, songName);
         if (result == "error") {
           console.log("aborted at chunk: ", i);
-          elements.progressContainer.classList.add("d-none");
-          elements.dropzone.classList.remove("d-none");
-          elements.submit.classList.remove("d-none");
-          elements.cancel.classList.remove("d-none");
-          elements.fileInput.value = "";
+          resetUploadUI();
           return;
         }
 
@@ -1169,8 +1335,16 @@ function openCustomModal(targetName, isFolderTarget) {
       console.log("Upload complete for file: ", songName);
       cleanup();
 
-      // Refresh directory after upload
       await refreshSdDirectory();
+
+      // Helper function to reset UI after error (extracted for reuse)
+      function resetUploadUI() {
+        elements.progressContainer.classList.add("d-none");
+        elements.dropzone.classList.remove("d-none");
+        elements.submit.classList.remove("d-none");
+        elements.cancel.classList.remove("d-none");
+        elements.fileInput.value = "";
+      }
     };
 
     elements.dropzone.onclick = (e) => {
