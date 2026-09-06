@@ -316,7 +316,7 @@ function openCustomModal(targetName, isFolderTarget) {
       }
 
       // 2. Send cover image
-      const coverResult = await uploadCover(coverPng, tempFile.name);
+      const coverResult = await uploadCover(coverPng, songNameInput);
       if (coverResult === "error") {
         console.log("Cover upload failed");
         resetUploadUI();
@@ -345,7 +345,7 @@ function openCustomModal(targetName, isFolderTarget) {
         type: "audio/mpeg",
       });
 
-      const songName = newSong.name;
+      const songName = songNameInput + ".mp3";
       const songSize = newSong.size;
       const totalIterations = Math.ceil(songSize / chunkSize);
 
@@ -758,14 +758,13 @@ document.body.addEventListener("click", (event) => {
   }
 });
 
-// Toggle hidden items (directories starting with "_")
 const toggleHiddenBtn = document.getElementById("toggle-hidden-btn");
 if (toggleHiddenBtn) {
   toggleHiddenBtn.addEventListener("click", () => {
     const container = document.getElementById("result-container");
     container.classList.toggle("show-hidden");
     const isShowing = container.classList.contains("show-hidden");
-    toggleHiddenBtn.textContent = isShowing ? "Hide Hidden" : "Show Hidden";
+    toggleHiddenBtn.textContent = isShowing ? "Conceal" : "Reveal";
   });
 }
 

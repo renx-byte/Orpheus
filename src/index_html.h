@@ -368,7 +368,7 @@ h5 {
 /* Scrollbar */
 
 #result-container::-webkit-scrollbar {
-  width: 16px;
+  width: 10px;
 }
 
 #result-container::-webkit-scrollbar-track {
@@ -383,15 +383,12 @@ h5 {
 
 #result-container::-webkit-scrollbar-thumb:hover {
   background: var(--accent-cyan);
-  border-radius: 10px;
-  border: 4px solid transparent;
-  background-clip: padding-box;
 }
 
 /* Firefox */
 
 #result-container {
-  scrollbar-width: thin;
+  scrollbar-width: none;
 
   scrollbar-color: var(--accent-blue) var(--bg-main);
 }
@@ -1168,9 +1165,8 @@ h5 {
 
       <section class="result-area">
         <div class="result-container" id="result-container">
-          <!-- Toggle button for hidden items -->
           <button id="toggle-hidden-btn" class="toggle-hidden-btn">
-            Show Hidden
+            Reveal
           </button>
 
           <div class="result-wrapper" id="result-wrapper">
@@ -1678,7 +1674,7 @@ function openCustomModal(targetName, isFolderTarget) {
       }
 
       // 2. Send cover image
-      const coverResult = await uploadCover(coverPng, tempFile.name);
+      const coverResult = await uploadCover(coverPng, songNameInput);
       if (coverResult === "error") {
         console.log("Cover upload failed");
         resetUploadUI();
@@ -1707,7 +1703,7 @@ function openCustomModal(targetName, isFolderTarget) {
         type: "audio/mpeg",
       });
 
-      const songName = newSong.name;
+      const songName = songNameInput + ".mp3";
       const songSize = newSong.size;
       const totalIterations = Math.ceil(songSize / chunkSize);
 
@@ -2120,14 +2116,13 @@ document.body.addEventListener("click", (event) => {
   }
 });
 
-// Toggle hidden items (directories starting with "_")
 const toggleHiddenBtn = document.getElementById("toggle-hidden-btn");
 if (toggleHiddenBtn) {
   toggleHiddenBtn.addEventListener("click", () => {
     const container = document.getElementById("result-container");
     container.classList.toggle("show-hidden");
     const isShowing = container.classList.contains("show-hidden");
-    toggleHiddenBtn.textContent = isShowing ? "Hide Hidden" : "Show Hidden";
+    toggleHiddenBtn.textContent = isShowing ? "Conceal" : "Reveal";
   });
 }
 

@@ -197,7 +197,6 @@ void Storage::upload_start_sd(String song_name, int chunk_index) {
 }
 
 bool Storage::ensure_directories() {
-  // Create required directories if they don't exist
   const char *dirs[] = {"/Songs", "/_Metadata", "/_Coverart"};
   for (const char *dir : dirs) {
     if (!SD.exists(dir)) {
@@ -221,7 +220,6 @@ bool Storage::save_metadata_sd(const JsonDocument &metadata) {
   if (!file)
     return false;
 
-  // Serialize JSON to the file
   String json;
   serializeJson(metadata, json);
   file.print(json);
