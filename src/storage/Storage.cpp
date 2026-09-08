@@ -306,6 +306,101 @@ void Storage::build_json_directory(File dir, JsonArray parentArray) {
   }
 }
 
+String Storage::get_songs_json() {
+  JsonDocument doc; // Dynamic document to hold song array
+  JsonArray songsArray = doc["songs"].to<JsonArray>();
+
+  File dir = SD.open("/_Metadata");
+  if (!dir || !dir.isDirectory()) {
+    Serial.println("Metadata directory not found!");
+    doc["songs"] = JsonArray(); // Ensure "songs" is empty array
+    String json;
+    serializeJson(doc, json);
+    return json;
+  }
+
+  while (true) {
+    File entry = dir.openNextFile();
+    if (!entry)
+      break;
+
+    if (!entry.isDirectory()) {
+      String fileName = entry.name();
+      if (fileName.endsWith(".json")) {
+        // Read the JSON metadata file
+        String jsonContent;
+        File metaFile = SD.open(entry.path(), FILE_READ);
+        if (metaFile) {
+          jsonContent = "";
+          while (metaFile.available()) {
+            jsonContent += (char)metaFile.read();
+          }
+          metaFile.close();
+
+          // Parse metadata
+          StaticJsonDocument<256> metaDoc;
+          DeserializationError error = deserializeJson(metaDoc, jsonContent);
+          if (!error) {
+            const char *name = metaDoc["name"] | "Unknown";
+            const char *artist = metaDoc["artist"] | "Unknown";
+            const char *album = metaDoc["album"] | "Unknown";
+            const char *releaseYear = metaDoc["releaseYear"] | "Unknown";
+            const char *duration = metaDoc["duration"] | "Unknown";
+
+            // Build the cover art filename (e.g., "Shadow World.png")
+            // No URL encoding here – the client will encode it.
+            String coverFilename = String(name) + ".png";
+
+            JsonObject songObj = songsArray.add<JsonObject>();
+            songObj["name"] = name;
+            songObj["artist"] = artist;
+            songObj["album"] = album;
+            songObj["releaseYear"] = releaseYear;
+            songObj["duration"] = duration;
+            songObj["coverFilename"] = coverFilename;
+          }
+        }
+      }
+    }
+    entry.close();
+  }
+
+  String json;
+  serializeJson(doc, json);
+  return json;
+}
+
+File Storage::get_cover_art_file(const String &fileName) {
+  // Basic sanitization: allow alphanumeric, dot, underscore, dash, AND spaces
+  for (unsigned int i = 0; i < fileName.length(); i++) {
+    char c = fileName.charAt(i);
+    if (!isalnum(c) && c != '.' && c != '_' && c != '-' && c != ' ') {
+      Serial.println("Invalid cover art filename.");
+      return File(); // empty file
+    }
+  }
+
+  // Prevent path traversal
+  if (fileName.indexOf("..") != -1 || fileName.startsWith("/")) {
+    Serial.println("Path traversal attempt blocked.");
+    return File();
+  }
+
+  String path = "/_Coverart/" + fileName;
+  if (!SD.exists(path.c_str())) {
+    Serial.print("Cover art not found: ");
+    Serial.println(path);
+    return File();
+  }
+
+  File file = SD.open(path.c_str(), FILE_READ);
+  if (!file) {
+    Serial.print("Failed to open cover art: ");
+    Serial.println(path);
+  }
+  return file;
+}
+
 String Storage::get_sd_json_structure() {
   JsonDocument doc; // Use a dynamic JsonDocument for potentially large trees
   doc["path"] = "/";

@@ -1,9 +1,9 @@
-#ifndef INDEX_HTML_H
-#define INDEX_HTML_H
+#ifndef HOME_H
+#define HOME_H
 
 #include <Arduino.h>
 
-const char index_html[] PROGMEM = R"rawliteral(
+const char home_html[] PROGMEM = R"rawliteral(
 <!doctype html>
 <html lang="en">
   <head>
@@ -1122,6 +1122,10 @@ h5 {
   color: #000;
 }
 
+a {
+  text-decoration: none;
+}
+
 </style>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"
@@ -1145,14 +1149,15 @@ h5 {
         >
           <h5 class="selection-text">SD Card</h5>
         </div>
-
-        <div
-          class="selection-card"
-          data-title="UPLOAD"
-          data-description="Upload your music directly to Orpheus and keep your library organized without needing to access the SD card manually. Add songs along with their name, cover image, artist, album, and other details, ensuring every track is properly identified and displayed on the device. This section provides a simple way to upload and manage new music while keeping your Orpheus library clean, organized, and ready to play."
-        >
-          <h5 class="selection-text">Upload</h5>
-        </div>
+        <a href="/compendium">
+          <div
+            class="selection-card"
+            data-title="UPLOAD"
+            data-description="Upload your music directly to Orpheus and keep your library organized without needing to access the SD card manually. Add songs along with their name, cover image, artist, album, and other details, ensuring every track is properly identified and displayed on the device. This section provides a simple way to upload and manage new music while keeping your Orpheus library clean, organized, and ready to play."
+          >
+            <h5 class="selection-text">COMPENDIUM</h5>
+          </div>
+        </a>
 
         <div
           class="selection-card"
@@ -1364,7 +1369,7 @@ import { ID3Writer } from "https://cdn.jsdelivr.net/npm/browser-id3-writer@6.4.0
 
 const initTypewriter = () => {
   const heading = document.getElementById("typewriter-heading");
-  const phrases = ["renx-byte...", "Test ENV..."];
+  const phrases = ["renx-byte...", "Test ENVIRONMENT..."];
 
   let phraseIndex = 0;
   let charIndex = 0;
@@ -2134,4 +2139,4 @@ sdDirectoryListener();
 
 )rawliteral";
 
-#endif // INDEX_HTML_H
+#endif // HOME_H

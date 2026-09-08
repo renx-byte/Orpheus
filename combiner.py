@@ -2,7 +2,7 @@ import re
 import os
 import argparse
 
-def combine_web_to_header(html_path, css_path, js_path, cpp_header_path):
+def combine_web_to_header(html_path, css_path, js_path, cpp_header_path, is_module=False):
     # 1. Check if input files exist
     for path in [html_path, css_path, js_path]:
         if not os.path.exists(path):
@@ -24,44 +24,64 @@ def combine_web_to_header(html_path, css_path, js_path, cpp_header_path):
     with open(js_path, 'r', encoding='utf-8') as file:
         js_content = file.read()
 
-    # 3. Replace CSS <link> tag for styles.css with a <style> block
-    css_pattern = re.compile(r'<link[^>]*href=["\'](?:.*?/)?styles\.css["\'][^>]*>', re.IGNORECASE)
+    # Extract base filenames so the regex finds the correct tags dynamically 
+    css_filename = os.path.basename(css_path)
+    js_filename = os.path.basename(js_path)
+
+    # 3. Replace CSS <link> tag for the specific CSS file with a <style> block
+    css_pattern = re.compile(rf'<link[^>]*href=["\'](?:.*?/)?{re.escape(css_filename)}["\'][^>]*>', re.IGNORECASE)
     style_block = f"<style>\n{css_content}\n</style>"
     html_content = css_pattern.sub(lambda _: style_block, html_content, count=1)
 
-    # 4. Remove ONLY local index.js script tag (preserves external CDNs like jsmediatags)
-    js_pattern = re.compile(r'<script[^>]*src=["\'](?:\./)?index\.js["\'][^>]*>[\s\S]*?</script>', re.IGNORECASE)
+    # 4. Remove ONLY the local script tag matching the JS filename
+    js_pattern = re.compile(rf'<script[^>]*src=["\'](?:\./)?{re.escape(js_filename)}["\'][^>]*>[\s\S]*?</script>', re.IGNORECASE)
     html_content = js_pattern.sub('', html_content)
 
-    # 5. Inject inline JS as ES module before closing </body> tag
-    script_block = f'<script type="module">\n{js_content}\n</script>\n</body>'
+    # 5. Inject inline JS before closing </body> tag
+    script_type = ' type="module"' if is_module else ''
+    script_block = f'<script{script_type}>\n{js_content}\n</script>\n</body>'
     html_content = re.sub(r'(?i)</body>', lambda _: script_block, html_content)
 
+    # Dynamically generate C++ macros and variable names based on the output filename
+    # e.g., "home.h" -> HOME_H and home_html
+    base_name = os.path.splitext(os.path.basename(cpp_header_path))[0]
+    macro_name = f"{base_name.upper()}_H"
+    var_name = f"{base_name}_html"
+
     # 6. Generate C++ Header File (.h) with Arduino.h included
-    cpp_header_content = f"""#ifndef INDEX_HTML_H
-#define INDEX_HTML_H
+    cpp_header_content = f"""#ifndef {macro_name}
+#define {macro_name}
 
 #include <Arduino.h>
 
-const char index_html[] PROGMEM = R"rawliteral(
+const char {var_name}[] PROGMEM = R"rawliteral(
 {html_content}
 )rawliteral";
 
-#endif // INDEX_HTML_H
+#endif // {macro_name}
 """
     # 7. Write to the C++ Header file (Overwrites if exists)
     with open(cpp_header_path, 'w', encoding='utf-8') as file:
         file.write(cpp_header_content)
         
-    print(f"Success! C++ header file saved to: {cpp_header_path}")
+    print(f"Success! C++ header file saved to: {cpp_header_path} (Module: {is_module})")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Combine web files directly into a C++ header file.")
-    parser.add_argument("--html", default="./web/index.html", help="Input HTML file")
-    parser.add_argument("--css", default="./web/styles.css", help="Input CSS file")
-    parser.add_argument("--js", default="./web/index.js", help="Input JS file")
-    parser.add_argument("--cpp", default="./src/index_html.h", help="Output C++ Header file")
-    
-    args = parser.parse_args()
-    combine_web_to_header(args.html, args.css, args.js, args.cpp)
+    # Process Home Page (Loads JS as a Module)
+    combine_web_to_header(
+        html_path="./web/home.html",
+        css_path="./web/home.css",
+        js_path="./web/home.js",
+        cpp_header_path="./src/home.h",
+        is_module=True
+    )
+
+    # Process Compendium Page (Loads JS as a standard Script)
+    combine_web_to_header(
+        html_path="./web/compendium.html",
+        css_path="./web/compendium.css",
+        js_path="./web/compendium.js",
+        cpp_header_path="./src/compendium.h",
+        is_module=False
+    )

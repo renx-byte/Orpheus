@@ -6,7 +6,7 @@ import { ID3Writer } from "https://cdn.jsdelivr.net/npm/browser-id3-writer@6.4.0
 
 const initTypewriter = () => {
   const heading = document.getElementById("typewriter-heading");
-  const phrases = ["renx-byte...", "Test ENV..."];
+  const phrases = ["renx-byte...", "Test ENVIRONMENT..."];
 
   let phraseIndex = 0;
   let charIndex = 0;

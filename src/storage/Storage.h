@@ -26,6 +26,9 @@ public:
   static File download_file_sd(const String &path);
 
   static String get_sd_json_structure();
+  static File get_cover_art_file(const String &fileName);
+
+  static String get_songs_json();
 
 private:
   static File currentFile;

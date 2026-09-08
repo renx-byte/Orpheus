@@ -1,19 +1,18 @@
 #include "Storage.h"
+#include "compendium.h"
 #include "credentials.h"
-#include "index_html.h"
+#include "home.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WebServer.h>
 #include <WiFi.h>
 
+
 WebServer server(80);
 
-void serve_webpage() { server.send(200, "text/html", index_html); }
+void serve_webpage() { server.send(200, "text/html", home_html); }
 
-void click_handle() {
-  // This endpoint is now only used for non-SD CARD selections (if any)
-  server.send(200, "text/plain", "OK");
-}
+void click_handle() { server.send(200, "text/plain", "OK"); }
 
 void add_handle() {
   String body = server.arg("plain");
@@ -155,12 +154,66 @@ void setup() {
   size_t headerKeysCount = sizeof(headerKeys) / sizeof(char *);
   server.collectHeaders(headerKeys, headerKeysCount);
 
-  // Existing endpoints
   server.on(
       "/upload_song", HTTP_POST, []() { server.send(200, "text/plain", "OK"); },
       handle_song_upload);
 
   server.on("/", HTTP_GET, serve_webpage);
+
+  server.on("/compendium", HTTP_GET,
+            []() { server.send(200, "text/html", compendium_html); });
+
+  server.on("/songs.json", HTTP_GET, []() {
+    String json = Storage::get_songs_json();
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, "application/json", json);
+  });
+
+  server.on("/coverart", HTTP_GET, []() {
+    String fileName = "";
+    if (server.hasArg("file")) {
+      fileName = server.arg("file");
+    } else {
+      // Fallback: manually parse the raw URI query string
+      String uri = server.uri();
+      int queryIndex = uri.indexOf('?');
+      if (queryIndex >= 0) {
+        String query = uri.substring(queryIndex + 1);
+        int filePos = query.indexOf("file=");
+        if (filePos >= 0) {
+          fileName = query.substring(filePos + 5);
+          int ampPos = fileName.indexOf('&');
+          if (ampPos >= 0) {
+            fileName = fileName.substring(0, ampPos);
+          }
+          fileName.replace("%20", " ");
+        }
+      }
+    }
+
+    if (fileName.length() == 0) {
+      server.send(400, "text/plain", "Missing 'file' parameter");
+      return;
+    }
+
+    File file = Storage::get_cover_art_file(fileName);
+    if (!file) {
+      server.send(404, "text/plain", "Cover art not found");
+      return;
+    }
+
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.sendHeader("Content-Type", "image/png");
+    server.sendHeader("Content-Length", String(file.size()));
+
+    const size_t bufferSize = 1024;
+    uint8_t buffer[bufferSize];
+    while (file.available()) {
+      size_t bytesRead = file.read(buffer, bufferSize);
+      server.client().write(buffer, bytesRead);
+    }
+    file.close();
+  });
 
   server.on("/selection_click", HTTP_POST, click_handle);
 
