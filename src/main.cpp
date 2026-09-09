@@ -4,9 +4,9 @@
 #include "home.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <ESPmDNS.h>
 #include <WebServer.h>
 #include <WiFi.h>
-
 
 WebServer server(80);
 
@@ -96,7 +96,6 @@ void handle_sd_directory() {
   server.send(200, "application/json", json);
 }
 
-// New handler for metadata upload (JSON)
 void handle_metadata_upload() {
   String body = server.arg("plain");
   JsonDocument doc;
@@ -116,10 +115,8 @@ void handle_metadata_upload() {
   }
 }
 
-// Final response for cover upload
 void handle_cover_upload() { server.send(200, "text/plain", "OK"); }
 
-// Handle file upload for cover
 void handle_cover_file_upload() {
   HTTPUpload &upload = server.upload();
 
@@ -146,8 +143,15 @@ void setup() {
   }
   Serial.println("");
   Serial.println("WiFi Connected!");
+
   Serial.print("IP ADDRESS: ");
   Serial.println(WiFi.localIP());
+
+  if (MDNS.begin("orpheus")) {
+    Serial.println("MDNS responder started");
+  } else {
+    Serial.println("Error setting up MDNS responder!");
+  }
 
   const char *headerKeys[] = {"X-Song-Name", "X-Chunk-Index", "X-Total-Chunks",
                               "Content-Length"};
@@ -174,7 +178,6 @@ void setup() {
     if (server.hasArg("file")) {
       fileName = server.arg("file");
     } else {
-      // Fallback: manually parse the raw URI query string
       String uri = server.uri();
       int queryIndex = uri.indexOf('?');
       if (queryIndex >= 0) {
@@ -225,7 +228,6 @@ void setup() {
 
   server.on("/sd_directory", HTTP_GET, handle_sd_directory);
 
-  // New endpoints for metadata and cover upload
   server.on("/upload_metadata", HTTP_POST, handle_metadata_upload);
 
   server.on("/upload_cover", HTTP_POST, handle_cover_upload,

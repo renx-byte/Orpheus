@@ -347,8 +347,6 @@ String Storage::get_songs_json() {
             const char *releaseYear = metaDoc["releaseYear"] | "Unknown";
             const char *duration = metaDoc["duration"] | "Unknown";
 
-            // Build the cover art filename (e.g., "Shadow World.png")
-            // No URL encoding here – the client will encode it.
             String coverFilename = String(name) + ".png";
 
             JsonObject songObj = songsArray.add<JsonObject>();

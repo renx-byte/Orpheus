@@ -1,7 +1,3 @@
-// ============================================================
-// Typewriter Effect
-// ============================================================
-
 import { ID3Writer } from "https://cdn.jsdelivr.net/npm/browser-id3-writer@6.4.0/dist/browser-id3-writer.mjs";
 
 const initTypewriter = () => {
@@ -134,7 +130,7 @@ async function uploadCover(coverFile, songName) {
     const response = await fetch("/upload_cover", {
       method: "POST",
       headers: {
-        "X-Song-Name": songName, // optional, helps associate cover with song on ESP32
+        "X-Song-Name": songName,
       },
       body: formData,
     });
@@ -146,9 +142,6 @@ async function uploadCover(coverFile, songName) {
   }
 }
 
-// ============================================================
-// Modal Logic (unchanged, using static HTML in index.html)
-// ============================================================
 function openCustomModal(targetName, isFolderTarget) {
   return new Promise((resolve) => {
     const overlay = document.getElementById("custom-modal-overlay");
@@ -466,7 +459,7 @@ function renderDirectory(data) {
   const listElement = document.getElementById("sd-directory-list");
   if (!listElement) return;
 
-  listElement.innerHTML = ""; // clear existing list
+  listElement.innerHTML = "";
   buildDirectoryDOM(data, listElement);
 }
 
@@ -495,9 +488,6 @@ async function refreshSdDirectory() {
   }
 }
 
-// ============================================================
-// SD Directory Interaction Listener
-// ============================================================
 function sdDirectoryListener() {
   const sdDirectory = document.getElementById("sd-directory");
   if (!sdDirectory) return;
