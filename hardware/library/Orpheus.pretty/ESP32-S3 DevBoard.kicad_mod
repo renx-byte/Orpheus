@@ -7,11 +7,23 @@
 		(at 12.7 21.003 0)
 		(unlocked yes)
 		(layer "F.SilkS")
-		(uuid "acc4277b-bbc8-4522-9986-b8a4d0af98ee")
+		(uuid "2b9a0fe4-1b54-4a50-95fd-4d6a2d0ed104")
 		(effects
 			(font
 				(size 1 1)
 				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "ESP32-S3 DevBoard"
+		(at 12.7 22.503 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "beedbc5b-54e8-4b10-97d9-e95e32bbeeb1")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
 			)
 		)
 	)
@@ -20,7 +32,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "ce5278cc-d300-4bdd-acbd-f0fe3b6d6aa7")
+		(uuid "ce657fd2-5822-4ec3-ad61-595ca582673d")
 		(effects
 			(font
 				(size 1 1)
@@ -33,19 +45,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "ccab9684-bf34-4be9-a6a2-f54f86392999")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.15)
-			)
-		)
-	)
-	(property "Value" "ESP32-S3 DevBoard"
-		(at 12.7 22.503 0)
-		(unlocked yes)
-		(layer "F.Fab")
-		(uuid "5e70f838-82c4-42af-b5fd-2462ea5e9e40")
+		(uuid "6b9e6058-94f6-4926-88c1-26a09b8a4725")
 		(effects
 			(font
 				(size 1 1)

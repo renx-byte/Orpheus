@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "Orpheus") (type "KiCad") (uri "C:/Users/shaha/OneDrive/Documents/PlatformIO/Projects/Orpheus/hardware/library/Orpheus.pretty") (options "") (descr ""))
+)
