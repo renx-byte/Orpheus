@@ -1,3 +1,5 @@
+#include "Display.h"
+#include "GUI.h"
 #include "Storage.h"
 #include "compendium.h"
 #include "credentials.h"
@@ -242,6 +244,14 @@ void setup() {
   }
 
   Serial.println("SD Card Directory JSON endpoint ready.");
+
+  Display::begin();
+
+  GUI::begin();
 }
 
-void loop() { server.handleClient(); }
+void loop() {
+  server.handleClient();
+  GUI::update();
+  delay(5);
+}
