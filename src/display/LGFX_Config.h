@@ -9,21 +9,21 @@ class LGFX : public lgfx::LGFX_Device {
 
 public:
   LGFX() {
-    { // SPI Bus — FSPI / SPI2 with native IO_MUX pins
+    {
       auto cfg = _bus_instance.config();
 
-      cfg.spi_host = SPI2_HOST; // ← the actual fix
+      cfg.spi_host = SPI2_HOST;
       cfg.spi_mode = 0;
-      cfg.freq_write = 20000000; // native pins can go fast; 10M if unstable
+      cfg.freq_write = 20000000;
       cfg.freq_read = 8000000;
       cfg.spi_3wire = false;
       cfg.use_lock = true;
       cfg.dma_channel = SPI_DMA_CH_AUTO;
 
-      cfg.pin_sclk = PIN::TFT_SCLK; // 12  (FSPICLK)
-      cfg.pin_mosi = PIN::TFT_MOSI; // 11  (FSPID)
-      cfg.pin_miso = -1;            // ignore TFT_MISO=13 for write-only
-      cfg.pin_dc = PIN::TFT_DC;     // 14  (FSPIWP, used as plain GPIO here)
+      cfg.pin_sclk = PIN::TFT_SCLK;
+      cfg.pin_mosi = PIN::TFT_MOSI;
+      cfg.pin_miso = -1;
+      cfg.pin_dc = PIN::TFT_DC;
 
       _bus_instance.config(cfg);
       _panel_instance.setBus(&_bus_instance);
@@ -32,8 +32,8 @@ public:
     { // ILI9341 panel
       auto cfg = _panel_instance.config();
 
-      cfg.pin_cs = PIN::TFT_CS;   // 10  (FSPICS0)
-      cfg.pin_rst = PIN::TFT_RST; // 21
+      cfg.pin_cs = PIN::TFT_CS;
+      cfg.pin_rst = PIN::TFT_RST;
       cfg.pin_busy = -1;
 
       cfg.panel_width = 240;

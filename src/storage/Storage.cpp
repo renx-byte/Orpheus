@@ -1,5 +1,7 @@
 #include "Storage.h"
 
+SPIClass sdSPI(HSPI);
+
 File Storage::currentFile;
 File Storage::currentCoverFile;
 
@@ -268,9 +270,12 @@ void Storage::upload_end_sd() {
 File Storage::download_file_sd(const String &path) { return SD.open(path); }
 
 bool Storage::begin() {
-  SPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);
 
-  if (!SD.begin(PIN::SD_CS, SPI, 40000000)) {
+  sdSPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);
+
+  // SPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);
+
+  if (!SD.begin(PIN::SD_CS, sdSPI, 40000000)) {
     Serial.println("SD mount failed");
     return false;
   }

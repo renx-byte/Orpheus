@@ -18,28 +18,36 @@ static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px) {
 }
 
 void Display::begin() {
-  Serial.println("Initializing Display");
+
+  Serial.println("1: Initializing Display");
 
   lcd.init();
-  lcd.setRotation(1); // 320 x 240 landscape
+  Serial.println("2: lcd.init() complete");
+
+  lcd.setRotation(3); // 320 x 240 landscape
+  Serial.println("3: setRotation() complete");
 
   lv_init();
+  Serial.println("4: lv_init() complete");
 
-  // 1) Give LVGL a millisecond tick source (v9 API).
-  //    Without this, timers/animations never advance.
+  // Give LVGL a millisecond tick source.
   lv_tick_set_cb([]() -> uint32_t { return millis(); });
+  Serial.println("5: lv_tick_set_cb() complete");
 
   lv_display_t *display = lv_display_create(320, 240);
+  Serial.println("6: lv_display_create() complete");
 
   lv_display_set_buffers(display, drawBuffer, nullptr, sizeof(drawBuffer),
                          LV_DISPLAY_RENDER_MODE_PARTIAL);
+  Serial.println("7: lv_display_set_buffers() complete");
 
   lv_display_set_flush_cb(display, flush_cb);
+  Serial.println("8: lv_display_set_flush_cb() complete");
 
-  // 2) Make this the default display so lv_screen_active() targets it.
   lv_display_set_default(display);
+  Serial.println("9: lv_display_set_default() complete");
 
-  Serial.println("Display initialized.");
+  Serial.println("10: Display initialized.");
 }
 
 LGFX &Display::getLCD() { return lcd; }
