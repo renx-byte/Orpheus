@@ -6,10 +6,13 @@
 
 class Display {
 public:
-  static void begin();
+    static void begin();
+    static LGFX &getLCD();
 
-  static LGFX &getLCD();
+    // Toggle orientation function
+    static void toggleOrientation();
 
 private:
-  static LGFX lcd;
+    static LGFX lcd;
+    static uint8_t currentOrientation;
 };

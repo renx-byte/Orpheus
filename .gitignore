@@ -6,5 +6,7 @@ include/
 lib/
 test/
 
+src/server/credentials.h
+
 
 hardware/kicad/.history/

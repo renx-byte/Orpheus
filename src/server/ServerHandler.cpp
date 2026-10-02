@@ -3,6 +3,7 @@
 #include "compendium.h"
 #include "home.h"
 #include <Arduino.h>
+#include <Display.h>
 
 static WebServer server(80);
 
@@ -10,13 +11,23 @@ static WebServer server(80);
 // Page / simple handlers
 // ---------------------------------------------------------------------------
 
-void ServerHandler::serve_webpage() {
-  server.send(200, "text/html", home_html);
+void ServerHandler::serve_pgm_html(PGM_P html) {
+  const size_t total = strlen_P(html);
+  const size_t CHUNK = 2048;
+
+  server.setContentLength(total);
+  server.send(200, "text/html", "");
+
+  for (size_t i = 0; i < total; i += CHUNK) {
+    size_t n = min(CHUNK, total - i);
+    server.sendContent_P(html + i, n);
+  }
+
 }
 
-void ServerHandler::serve_compendium() {
-  server.send(200, "text/html", compendium_html);
-}
+void ServerHandler::serve_webpage()  { serve_pgm_html(home_html); }
+
+void ServerHandler::serve_compendium(){ serve_pgm_html(compendium_html); }
 
 void ServerHandler::serve_songs_json() {
   String json = Storage::get_songs_json();

@@ -1,15 +1,24 @@
 #include "GUI.h"
 #include "lvgl.h"
 
+lv_obj_t *debug_screen;
+lv_obj_t *home_screen;
+
 void GUI::begin() {
 
+  GUI::create_debug_screen();
+  GUI::load_debug_screen();
+
+}
+
+void GUI::create_home_screen() {
   LV_FONT_DECLARE(pokemonDP_12);
   LV_FONT_DECLARE(pokemonDP_8);
 
   LV_IMG_DECLARE(bg);
   LV_IMG_DECLARE(pikachu_top);
 
-  lv_obj_t *home_screen = lv_obj_create(NULL);
+  home_screen = lv_obj_create(NULL);
   lv_obj_set_scrollbar_mode(home_screen, LV_SCROLLBAR_MODE_OFF);
   lv_obj_set_style_bg_color(home_screen, lv_color_black(), LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(home_screen, LV_OPA_COVER, LV_STATE_DEFAULT);
@@ -123,8 +132,47 @@ void GUI::begin() {
   lv_label_set_text(about_label, "ABOUT");
   lv_obj_set_style_text_font(about_label, &pokemonDP_12, LV_STATE_DEFAULT);
   lv_obj_align(about_label, LV_ALIGN_CENTER, 0, 0);
-
-  lv_screen_load(home_screen);
 }
+void GUI::create_debug_screen() {
+    debug_screen = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(debug_screen, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(debug_screen, lv_color_black(), LV_PART_MAIN);
+
+    lv_obj_set_flex_flow(debug_screen, LV_FLEX_FLOW_COLUMN);
+    
+    lv_obj_set_flex_align(
+        debug_screen, 
+        LV_FLEX_ALIGN_START,
+        LV_FLEX_ALIGN_START,
+        LV_FLEX_ALIGN_START
+    );
+
+    lv_obj_set_style_pad_row(debug_screen, 8, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(debug_screen, 12, LV_PART_MAIN);
+
+    lv_obj_t *debug_label = lv_label_create(debug_screen);
+    lv_label_set_recolor(debug_label, true);
+    lv_label_set_text(debug_label, "#0000FF BIOS CONSOLE#");
+
+    lv_obj_t *info_sd = lv_label_create(debug_screen);
+    lv_label_set_recolor(info_sd, true);
+    lv_label_set_text(info_sd, "#008000 [INFO]# SD Card Recognized.");
+
+    lv_obj_t *info_wifi = lv_label_create(debug_screen);
+    lv_label_set_recolor(info_wifi, true);
+    lv_label_set_text(info_wifi, "#008000 [INFO]# WiFi Connected.");
+
+    lv_obj_t *info_display = lv_label_create(debug_screen);
+    lv_label_set_recolor(info_display, true);
+    lv_label_set_text(info_display, "#008000 [INFO]# LVGL Initialized.");
+
+    lv_obj_t *info_battery = lv_label_create(debug_screen);
+    lv_label_set_recolor(info_battery, true);
+    lv_label_set_text(info_battery, "#FF0000 [ERROR]# No Battery Detected.");
+}
+
+void GUI::load_home_screen() {lv_screen_load(home_screen);}
+
+void GUI::load_debug_screen() {lv_screen_load(debug_screen);}
 
 void GUI::update() { lv_timer_handler(); }

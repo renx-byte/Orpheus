@@ -269,14 +269,11 @@ File Storage::download_file_sd(const String &path) { return SD.open(path); }
 
 bool Storage::begin() {
   SPI.begin(PIN::SD_SCLK, PIN::SD_MISO, PIN::SD_MOSI, PIN::SD_CS);
-
   if (!SD.begin(PIN::SD_CS, SPI, 40000000)) {
     Serial.println("SD mount failed");
     return false;
   }
-
   Serial.println("SD card initialized successfully.");
-
   print_sd_structure();
   return true;
 }

@@ -4,6 +4,9 @@
 #include "Storage.h"
 #include <Arduino.h>
 
+
+
+
 void setup() {
   delay(5000);
   Serial.begin(115200);
@@ -25,7 +28,10 @@ void setup() {
 }
 
 void loop() {
-  ServerHandler::update();
+  for (int i = 0; i < 10; i++) {
+    ServerHandler::update();
+    delay(0);
+  }
   GUI::update();
-  delay(5);
+  delay(1);
 }

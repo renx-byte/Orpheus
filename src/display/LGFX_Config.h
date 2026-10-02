@@ -12,7 +12,7 @@ public:
     { // SPI Bus — FSPI / SPI2 with native IO_MUX pins
       auto cfg = _bus_instance.config();
 
-      cfg.spi_host = SPI2_HOST; // ← the actual fix
+      cfg.spi_host = SPI3_HOST; // ← the actual fix
       cfg.spi_mode = 0;
       cfg.freq_write = 20000000; // native pins can go fast; 10M if unstable
       cfg.freq_read = 8000000;

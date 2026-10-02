@@ -35,4 +35,7 @@ private:
   static void handle_cover_file_upload();
   static void handle_download();
   static void handle_sd_directory();
+
+  private:
+  static void serve_pgm_html(PGM_P html);
 };
